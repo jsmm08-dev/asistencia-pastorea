@@ -14,3 +14,7 @@ recepción.
 - `index.html` se genera a partir de `Formulario.html` con
   `construir-pagina.py`; no se edita a mano.
 - `?demo` al final de la dirección abre la vista de prueba con datos inventados.
+- `sw.js` solo muestra el aviso «Ya puede hacer la foto»: el servidor manda un
+  aviso sin contenido (Web Push) cuando el evento cumple el tiempo para la
+  foto. No guarda nada en caché. En iPhone, el aviso solo llega si la página
+  está añadida a la pantalla de inicio (`manifest.webmanifest` y los iconos).

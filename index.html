@@ -6,6 +6,12 @@
   <meta property="og:description" content="Registre aquí a quienes llegan a cada evento. Necesita la clave de recepción.">
   <meta name="robots" content="noindex">
   <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%2300338D'/%3E%3Ccircle cx='25' cy='22' r='8' fill='%23fff'/%3E%3Cpath d='M10 50c0-10 7-16 15-16s15 6 15 16z' fill='%23fff'/%3E%3Cpath d='M37 31l6 6 12-13' fill='none' stroke='%2336B6E8' stroke-width='5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E">
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="apple-touch-icon" href="apple-touch-icon.png">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-title" content="Asistencia">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <meta name="theme-color" content="#00338D">
@@ -93,7 +99,12 @@
     .barra{position:sticky;top:0;z-index:5;margin:-16px calc(-1 * max(16px,env(safe-area-inset-right,0px))) 0 calc(-1 * max(16px,env(safe-area-inset-left,0px)));padding:10px max(16px,env(safe-area-inset-right,0px)) 10px max(16px,env(safe-area-inset-left,0px));background:rgba(242,244,248,.96);backdrop-filter:blur(6px);border-bottom:1px solid var(--linea);display:flex;flex-direction:column;gap:10px}
     .barra-f{display:flex;align-items:center;gap:10px}
     .atras{width:44px;height:44px;flex-shrink:0;border-radius:12px;border:1.5px solid var(--linea2);background:var(--sup);font-size:24px;line-height:1;color:var(--marino-osc)}
-    .barra-t{flex:1;min-width:0;display:flex;flex-direction:column}
+    .barra-t{flex:1;min-width:0;display:flex;flex-direction:column;align-items:stretch;background:none;border:0;padding:2px 4px;margin:-2px -4px;border-radius:10px;text-align:left;color:inherit}
+    .barra-t:active{background:var(--sup2)}
+    .bt-l{display:flex;align-items:center;gap:6px;min-width:0}
+    .bt-l b{min-width:0}
+    .bt-l svg{flex-shrink:0;color:var(--azul-txt)}
+    .barra-t .falta{color:var(--aviso);font-weight:700}
     .barra-t b{font-size:18px;line-height:1.2;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
     .barra-t span{font-size:14px;color:var(--suave);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
     .sync{flex-shrink:0;font-size:13px;font-weight:700;padding:4px 10px;border-radius:999px;background:var(--ok-s);color:var(--ok)}
@@ -231,12 +242,57 @@
     .toast button{flex-shrink:0;background:none;border:1.5px solid rgba(255,255,255,.5);color:#fff;border-radius:10px;min-height:40px;padding:0 12px;font-weight:700}
     .pie{text-align:center;color:var(--tenue);font-size:14px;margin-top:8px}
 
+    /* Al crear un evento: ¿es el de ayer o el de mañana? */
+    .grupo-t{margin:4px 0 -4px;font-size:13px;font-weight:800;letter-spacing:1px;text-transform:uppercase;color:var(--suave)}
+    .grupo-n{margin:-6px 0 0;font-size:15px;color:var(--suave)}
+    .ev.atrasado{border-color:#E8C979;box-shadow:inset 4px 0 0 #D19A14}
+    .ev.adelantado{border-style:dashed}
+    .sug{background:var(--aviso-s);border:1.5px solid #E8C979;border-radius:16px;padding:14px 16px;display:flex;flex-direction:column;gap:10px}
+    .sug>p{margin:0;color:var(--aviso);font-weight:700}
+    .sug-ops{display:flex;flex-direction:column;gap:8px}
+    .sug-op{display:flex;flex-direction:column;gap:2px;width:100%;text-align:left;padding:10px 14px;min-height:52px;border-radius:12px;border:1.5px solid #E8C979;background:var(--sup);color:var(--tinta)}
+    .sug-op b{font-size:17px}
+    .sug-op span{font-size:14px;color:var(--suave)}
+    .sug-op.ahora{border-style:dashed}
+
+    /* Aviso para la foto */
+    .aviso-f{display:flex;flex-direction:column;gap:6px;padding-top:4px;border-top:1px solid var(--linea)}
+    .aviso-f .btn{min-height:46px;font-size:16px}
+    .aviso-f p{margin:0;font-size:14px;color:var(--suave)}
+    .aviso-f .ok{color:var(--ok);font-weight:700}
+
+    /* Ventana con los datos del evento */
+    .hoja-ev .rejilla{margin-top:2px}
+
     @media (max-width:420px){
       .rejilla{grid-template-columns:1fr}
       .tipos{grid-template-columns:1fr}
       .cont b{font-size:21px}
       .cont span{font-size:11px}
       .banda h1{font-size:25px}
+    }
+    /* PC y tableta: aprovechar el ancho (buscador y foto a la izquierda, fichas a la derecha) */
+    @media (min-width:700px){
+      .banda-in,.pagina{max-width:880px}
+      .demo{max-width:848px}
+    }
+    @media (min-width:1000px){
+      .banda-in,.pagina{max-width:1320px}
+      .demo{max-width:1288px}
+      #v-clave,#v-cargando,#v-inicio,#v-datos,#v-cerrar,#v-fin{width:100%;max-width:780px;margin-inline:auto}
+      #v-registro{display:grid;grid-template-columns:minmax(320px,400px) minmax(0,1fr);gap:16px 24px;align-items:start}
+      #v-registro>.barra{grid-column:1/-1}
+      .contadores{grid-template-columns:repeat(5,minmax(0,140px))}
+      .adm{text-align:left}
+      .col-izq{display:flex;flex-direction:column;gap:16px;position:sticky;top:var(--alto-barra,150px);max-height:calc(100vh - var(--alto-barra,150px) - 12px);overflow-y:auto;padding:2px 2px 12px;margin:-2px}
+      .col-der{display:flex;flex-direction:column;gap:12px;min-width:0}
+      .fichas{grid-template-columns:repeat(auto-fill,minmax(124px,1fr))}
+      .hoja{top:50%;bottom:auto;transform:translate(-50%,-50%);border-radius:20px;max-height:86vh;width:min(640px,calc(100% - 48px))}
+      .dock{left:auto;right:24px;transform:none;width:min(440px,calc(100% - 48px))}
+    }
+    @media (max-width:999px){
+      .col-izq,.col-der{display:contents}
+      #ir-cerrar{order:5}
     }
     @media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
   </style>
@@ -285,6 +341,7 @@
   <section class="vista" id="v-datos" hidden>
     <button class="volver" type="button" data-ir="inicio">‹ Eventos de hoy</button>
     <div><h2>Datos del evento</h2><p class="sub" id="datos-origen"></p></div>
+    <div class="sug" id="d-sug" hidden></div>
     <div class="tarjeta">
       <div class="rejilla">
         <div class="campo"><label for="d-fecha">Fecha</label><input id="d-fecha" type="date"></div>
@@ -307,7 +364,7 @@
     <div class="barra">
       <div class="barra-f">
         <button class="atras" type="button" data-ir="inicio" aria-label="Volver a los eventos de hoy">‹</button>
-        <div class="barra-t"><b id="r-titulo"></b><span id="r-sub"></span></div>
+        <button class="barra-t" type="button" id="ver-datos" aria-haspopup="dialog" aria-label="Ver y corregir los datos del evento"><span class="bt-l"><b id="r-titulo"></b><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 20h4L19 9l-4-4L4 16z"/><path d="M14 6l4 4"/></svg></span><span id="r-sub"></span></button>
         <span class="sync" id="sync" role="status">Guardado</span>
         <button class="atras lupa" type="button" id="ir-buscar" aria-label="Buscar por nombre"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M20 20l-4-4"/></svg></button>
       </div>
@@ -315,6 +372,7 @@
       <p class="adm" id="adm"></p>
     </div>
 
+    <div class="col-izq">
     <div class="buscador" id="buscador">
       <label for="buscar" class="et">Toque la ficha de cada persona según llega, o escriba su nombre</label>
       <input id="buscar" type="search" autocomplete="off" autocorrect="off" autocapitalize="words" spellcheck="false" enterkeyhint="done" placeholder="Buscar por nombre…">
@@ -335,30 +393,15 @@
     </div>
 
     <div class="foto" id="foto"></div>
+    <button class="btn btn-cerrar btn-ancho" type="button" id="ir-cerrar">Cerrar el registro</button>
+    </div>
 
+    <div class="col-der">
     <div class="pestanas" id="pestanas" role="toolbar" aria-label="Filtrar las fichas"></div>
     <div class="fichas" id="fichas"></div>
     <p class="vacio" id="fichas-vacio" hidden></p>
+    </div>
 
-    <details class="datos-ev" id="datos-ev">
-      <summary>Datos del evento</summary>
-      <div class="dentro">
-        <div class="rejilla">
-          <div class="campo"><label for="e-tipo">Tipo de evento</label><select id="e-tipo"></select></div>
-          <div class="campo"><label for="e-comite">Comité encargado</label><select id="e-comite"></select></div>
-          <div class="campo"><label for="e-dirige">Dirige</label><input id="e-dirige" type="text" maxlength="120" autocapitalize="words"></div>
-          <div class="campo"><label for="e-predica">Predica</label><input id="e-predica" type="text" maxlength="120" autocapitalize="words"></div>
-          <div class="campo ancho"><label for="e-limpieza">Limpieza</label><input id="e-limpieza" type="text" maxlength="120" autocapitalize="words"></div>
-          <div class="campo ancho"><label for="e-tema">Tema</label><input id="e-tema" type="text" maxlength="200"></div>
-          <div class="campo"><label for="e-real">Hora real de inicio</label><input id="e-real" type="time"></div>
-        </div>
-        <p class="sub" id="e-recepcion"></p>
-        <p class="err" id="e-err" role="alert" hidden></p>
-        <button class="btn btn-ancho" type="button" id="e-guardar">Guardar cambios</button>
-      </div>
-    </details>
-
-    <button class="btn btn-cerrar btn-ancho" type="button" id="ir-cerrar">Cerrar el registro</button>
   </section>
 
   <!-- Cerrar -->
@@ -395,6 +438,23 @@
 </div>
 <div class="velo" id="velo" hidden></div>
 <section class="hoja" id="hoja" role="dialog" aria-modal="true" aria-labelledby="hoja-t" hidden></section>
+<section class="hoja hoja-ev" id="hoja-ev" role="dialog" aria-modal="true" aria-labelledby="hoja-ev-t" hidden>
+  <div class="hoja-cab"><div><h3 id="hoja-ev-t">Datos del evento</h3><p class="sub" id="e-recepcion"></p></div><button class="cerrar-h" type="button" id="hoja-ev-x" aria-label="Cerrar">×</button></div>
+  <div class="rejilla">
+    <div class="campo"><label for="e-fecha">Fecha</label><input id="e-fecha" type="date"></div>
+    <div class="campo"><label for="e-hora">Hora prevista</label><input id="e-hora" type="time"></div>
+    <div class="campo"><label for="e-tipo">Tipo de evento</label><select id="e-tipo"></select></div>
+    <div class="campo"><label for="e-comite">Comité encargado</label><select id="e-comite"></select></div>
+    <div class="campo"><label for="e-dirige">Dirige</label><input id="e-dirige" type="text" maxlength="120" autocapitalize="words"></div>
+    <div class="campo"><label for="e-predica">Predica</label><input id="e-predica" type="text" maxlength="120" autocapitalize="words"></div>
+    <div class="campo ancho"><label for="e-limpieza">Limpieza</label><input id="e-limpieza" type="text" maxlength="120" autocapitalize="words"></div>
+    <div class="campo ancho"><label for="e-tema">Tema</label><input id="e-tema" type="text" maxlength="200"></div>
+    <div class="campo"><label for="e-real">Hora real de inicio</label><input id="e-real" type="time"></div>
+  </div>
+  <p class="info" id="e-mover" hidden></p>
+  <p class="err" id="e-err" role="alert" hidden></p>
+  <div class="acc"><button class="btn btn-pri" type="button" id="e-guardar">Guardar cambios</button><button class="btn" type="button" id="e-cancelar">Cancelar</button></div>
+</section>
 
 <script>
 (function () {
@@ -553,21 +613,50 @@ function ponerPersonas(lista) {
   $('congs').innerHTML = Object.keys(cs).sort().map(function (c) { return '<option value="' + esc(c) + '">'; }).join('');
 }
 
+function minDe(hm) { var m = String(hm || '').match(/^(\d{1,2}):(\d{2})/); return m ? +m[1] * 60 + +m[2] : null; }
 function pintarInicio() {
   $('hoy-t').textContent = mayus(fechaLarga(hoyIso()));
   $('por').value = S.por;
-  var h = S.eventos.map(function (e, i) {
+  var g = { atrasado: [], hoy: [], adelantado: [] };
+  S.eventos.forEach(function (e, i) { (g[e.grupo] || g.hoy).push(botonEvento(e, i)); });
+  var h = '', otros = g.atrasado.length || g.adelantado.length;
+  if (g.atrasado.length) h += '<p class="grupo-t">Sin registrar</p><p class="grupo-n">Según el horario, ' + (g.atrasado.length === 1 ? 'este evento no se registró' : 'estos eventos no se registraron') + '. Si es el que está registrando ahora, tóquelo.</p>' + g.atrasado.join('');
+  if (otros) h += '<p class="grupo-t">Hoy</p>';
+  h += g.hoy.join('') || '<p class="vacio">No hay eventos previstos para hoy. Si están reunidos, pulse «Otro evento».</p>';
+  if (g.adelantado.length) h += '<p class="grupo-t">Por adelantado</p><p class="grupo-n">El próximo evento del horario, por si lo registra antes.</p>' + g.adelantado.join('');
+  $('eventos').innerHTML = h;
+}
+function botonEvento(e, i) {
     var titulo = (e.tipo || 'Evento') + (e.comite ? ' · ' + e.comite : '');
     var meta = [e.dirige ? 'Dirige: ' + e.dirige : '', e.predica ? 'Predica: ' + e.predica : '', e.tema ? '«' + e.tema + '»' : ''].filter(Boolean).join(' · ');
     var pils = '';
     if (e.id) pils += e.estado === 'Abierto' ? '<span class="pil verde">Registro abierto · ' + e.total + '</span>' : '<span class="pil">Cerrado · ' + e.total + ' personas</span>';
     else pils += '<span class="pil ' + (e.origen === 'Orden del Evento' ? 'azul' : '') + '">' + esc(e.origen === 'Horario habitual' ? 'Horario habitual' : 'Según ' + e.origen) + '</span>';
     if (e.nota) pils += '<span class="pil ambar">' + esc(e.nota) + '</span>';
+    if (e.grupo === 'atrasado') pils += '<span class="pil ambar">Sin registrar</span>';
+    if (e.grupo === 'adelantado') pils += '<span class="pil azul">Por adelantado</span>';
     if (e.fecha && e.fecha !== hoyIso()) pils += '<span class="pil">' + esc(mayus(fechaLarga(e.fecha))) + '</span>';
-    return '<button class="ev' + (e.id && e.estado === 'Abierto' ? ' abierto' : '') + '" type="button" data-ev="' + i + '"><span class="ev-hora">' + esc(e.hora) + '</span>' +
+    return '<button class="ev' + (e.id && e.estado === 'Abierto' ? ' abierto' : '') + (e.grupo === 'atrasado' || e.grupo === 'adelantado' ? ' ' + e.grupo : '') + '" type="button" data-ev="' + i + '"><span class="ev-hora">' + esc(e.hora) + '</span>' +
       '<span class="ev-c"><span class="ev-t">' + esc(titulo) + '</span>' + (meta ? '<span class="ev-m">' + esc(meta) + '</span>' : '') + '<span class="pils">' + pils + '</span></span></button>';
-  }).join('');
-  $('eventos').innerHTML = h || '<p class="vacio">No hay eventos previstos para hoy. Si están reunidos, pulse «Otro evento».</p>';
+}
+
+// «Otro evento»: si ahora no hay nada previsto, puede que sea el culto de ayer
+// (sin registrar) o el próximo (por adelantado). Se pregunta antes de abrirlo.
+function sugerencias() {
+  var hoy = hoyIso(), ahoraMin = minDe(horaAhora());
+  var libres = S.eventos.filter(function (e) { return !e.id; });
+  if (libres.some(function (e) { return e.fecha === hoy && Math.abs(minDe(e.hora) - ahoraMin) <= 120; })) return [];
+  return libres.filter(function (e) { return e.grupo === 'atrasado' || e.grupo === 'adelantado' || e.fecha === hoy; });
+}
+function pintarSugerencias(lista) {
+  var caja = $('d-sug');
+  if (!lista.length) { caja.hidden = true; caja.innerHTML = ''; return; }
+  S.sugs = lista;
+  caja.innerHTML = '<p>Ahora no hay ningún evento previsto. ¿Está registrando uno de estos?</p><div class="sug-ops">' + lista.map(function (e, i) {
+    var cuando = e.grupo === 'atrasado' ? 'Sin registrar' : e.grupo === 'adelantado' ? 'Por adelantado' : 'Hoy';
+    return '<button class="sug-op" type="button" data-sug="' + i + '"><b>' + esc((e.tipo || 'Evento') + ' · ' + mayus(fechaLarga(e.fecha)) + ', ' + e.hora) + '</b><span>' + esc(cuando + (e.comite ? ' · ' + e.comite : '')) + '</span></button>';
+  }).join('') + '<button class="sug-op ahora" type="button" data-sug="no"><b>No, es otro evento</b><span>Escribo la fecha, la hora y los datos abajo</span></button></div>';
+  caja.hidden = false;
 }
 
 function elegirEvento(i) {
@@ -575,7 +664,7 @@ function elegirEvento(i) {
   if (!porValido()) return;
   if (e.id) { abrirExistente(e.id); return; }
   S.borrador = Object.assign({}, e);
-  pintarDatos();
+  pintarDatos(); pintarSugerencias([]);
   ir('datos');
 }
 
@@ -595,7 +684,7 @@ function opciones(sel, lista, valor, vacio) {
 
 function pintarDatos() {
   var b = S.borrador;
-  $('d-fecha').value = b.fecha; $('d-fecha').min = sumarDias(hoyIso(), -7); $('d-fecha').max = sumarDias(hoyIso(), 1);
+  $('d-fecha').value = b.fecha; $('d-fecha').min = sumarDias(hoyIso(), -7); $('d-fecha').max = sumarDias(hoyIso(), 7);
   $('d-hora').value = b.hora;
   opciones($('d-tipo'), D.tiposEvento, b.tipo || 'Culto');
   opciones($('d-comite'), D.comites, b.comite, 'Sin indicar');
@@ -632,11 +721,12 @@ function entrarEnEvento(ev) {
   S.ev = ev; S.offset = (ev.ahora || Date.now()) - Date.now();
   guardar('ev', ev.id);
   try { S.cola = JSON.parse(leer('cola.' + ev.id) || 'null') || { items: {}, quitar: [] }; } catch (e) { S.cola = { items: {}, quitar: [] }; }
-  S.editando = null; S.fotoLocal = []; S.errorSync = ''; S.pest = 'todos'; cerrarHoja();
+  S.editando = null; S.fotoLocal = []; S.errorSync = ''; S.pest = 'todos'; cerrarHoja(); cerrarDatosEv();
   if (ev.estado === 'Cerrado') { pintarFin(); ir('fin'); return; }
   ir('registro');
   pintarDatosEvento();
   programarEnvio(200);
+  programarAvisoLocal();
 }
 
 // ── Registro ──────────────────────────────────────────────────────
@@ -654,7 +744,9 @@ function pintarRegistro() {
   var ev = S.ev, l = lista();
   $('r-titulo').textContent = (ev.tipo || 'Evento') + ' · ' + ev.hora;
   var fe = deIso(ev.fecha);
-  $('r-sub').textContent = [fe ? mayus(DIAS[fe.dow].slice(0, 3)) + ' ' + fe.d + ' ' + MESES[fe.m - 1].slice(0, 3) : '', jornada(ev.hora), ev.comite].filter(Boolean).join(' · ');
+  var falta = !ev.comite || !ev.dirige;
+  $('r-sub').innerHTML = esc([fe ? mayus(DIAS[fe.dow].slice(0, 3)) + ' ' + fe.d + ' ' + MESES[fe.m - 1].slice(0, 3) : '', jornada(ev.hora), ev.comite].filter(Boolean).join(' · ')) +
+    (falta ? ' · <span class="falta">Faltan datos</span>' : '');
   var c = { 'Bautizado': 0, 'Bautizado de visita': 0, 'Simpatizante': 0, 'Menor': 0 }, menores = 0, nuevos = 0;
   l.forEach(function (a) { if (c[a.t] != null) c[a.t]++; if (edadDe(a, S.porId[a.pid || a.pidTmp]) === 'Menor') menores++; if (a.nueva) nuevos++; });
   $('contadores').innerHTML = D.tipos.map(function (t) {
@@ -750,7 +842,8 @@ function abrirHoja(rid) {
 }
 function cerrarHoja() {
   if (!S.hoja && $('hoja').hidden) return;
-  S.hoja = null; $('hoja').hidden = true; $('velo').hidden = true; $('hoja').innerHTML = ''; document.body.classList.remove('con-hoja');
+  S.hoja = null; $('hoja').hidden = true; $('hoja').innerHTML = '';
+  if (!S.hojaEv) { $('velo').hidden = true; document.body.classList.remove('con-hoja'); }
 }
 
 function editorHTML(a) {
@@ -936,7 +1029,7 @@ function pintarFoto() {
     h = '<div class="foto-f"><span class="foto-ico">' + ICO_CAM + '</span><span class="foto-c"><b>Foto del evento a las ' + desde + '</b>' +
       '<span>' + (t < ev.inicioMs ? 'Cuando el evento lleve ' + D.minutosFoto + ' minutos, para que salga toda la congregación. ' + inicioTxt + '.' : 'Faltan ' + minutos(falta) + '. ' + inicioTxt + '.') + '</span></span></div>' +
       '<div class="progreso" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="' + Math.round(hecho * 100) + '" aria-label="Tiempo hasta la foto"><i style="width:' + Math.round(hecho * 100) + '%"></i></div>' +
-      (!ev.horaReal ? '<button class="btn btn-ancho" type="button" id="empezo">El evento ha empezado ahora</button>' : '');
+      (!ev.horaReal ? '<button class="btn btn-ancho" type="button" id="empezo">El evento ha empezado ahora</button>' : '') + avisoHTML(ev);
   } else if (n >= D.maxFotos) {
     h = '<div class="foto-f"><span class="foto-ico">' + ICO_CAM + '</span><span class="foto-c"><b>Fotos hechas</b><span>' + esc(hechas) + '</span></span></div>' + miniaturas;
   } else {
@@ -947,6 +1040,69 @@ function pintarFoto() {
   }
   if (S.errorFoto) h += '<p class="err" role="alert">' + esc(S.errorFoto) + '</p>';
   caja.className = cls; caja.innerHTML = h;
+  if (falta <= 0 && !n && ev.estado === 'Abierto') avisarAhora(ev);
+}
+
+// ── Aviso para la foto ────────────────────────────────────────────
+// Con permiso de notificaciones, el script manda un aviso (Web Push) cuando el
+// evento cumple el tiempo para la foto: llega aunque el móvil esté bloqueado.
+// En iPhone solo si la página está añadida a la pantalla de inicio. Mientras la
+// página sigue abierta, además, se avisa desde aquí (con vibración si se ve).
+var AV = { sw: null, avisados: {}, t: null };
+function iniciarAvisos() {
+  if (EN_GOOGLE || !('serviceWorker' in navigator) || !window.isSecureContext) return;
+  navigator.serviceWorker.register('sw.js').then(function (r) { AV.sw = r; if (S.vista === 'registro') pintarFoto(); }).catch(function () { /* sin avisos */ });
+}
+function esIOS() { return /iP(hone|ad|od)/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1); }
+function enPantallaInicio() { return (window.matchMedia && window.matchMedia('(display-mode: standalone)').matches) || navigator.standalone === true; }
+function pushPosible() { return !!(AV.sw && D.vapid && 'PushManager' in window && 'Notification' in window); }
+function avisoHTML(ev) {
+  if (ev.estado !== 'Abierto' || EN_GOOGLE) return '';
+  var hm = partes(ev.fotoDesdeMs).hm;
+  if (leer('aviso.' + ev.id) === '1' && window.Notification && Notification.permission === 'granted') return '<div class="aviso-f"><p class="ok">✓ Le avisaremos a las ' + hm + ', aunque tenga el móvil bloqueado.</p></div>';
+  if (esIOS() && !enPantallaInicio()) return '<div class="aviso-f"><p>Para recibir un aviso con el iPhone bloqueado, añada esta página a la pantalla de inicio (Compartir › «Añadir a pantalla de inicio») y ábrala desde allí.</p></div>';
+  if (!pushPosible()) return '';
+  if (Notification.permission === 'denied') return '<div class="aviso-f"><p>Las notificaciones de esta página están bloqueadas. Si quiere el aviso, actívelas en los ajustes del navegador.</p></div>';
+  return '<div class="aviso-f"><button class="btn btn-ancho" type="button" id="avisar-foto">🔔 Avisarme cuando toque la foto</button><p>Le llegará una notificación a las ' + hm + ', aunque tenga el móvil bloqueado.</p></div>';
+}
+function claveVapid(b64) {
+  var s = String(b64 || '').replace(/-/g, '+').replace(/_/g, '/'); while (s.length % 4) s += '=';
+  var bin = atob(s), out = new Uint8Array(bin.length);
+  for (var i = 0; i < bin.length; i++) out[i] = bin.charCodeAt(i);
+  return out;
+}
+function pedirAviso(boton) {
+  if (!S.ev || !pushPosible()) return;
+  boton.disabled = true; S.errorFoto = '';
+  var id = S.ev.id;
+  Promise.resolve(Notification.requestPermission()).then(function (perm) {
+    if (perm !== 'granted') throw new Error('Sin permiso no se puede avisar. Puede activarlo en los ajustes del navegador.');
+    return AV.sw.pushManager.getSubscription().then(function (sub) {
+      return sub || AV.sw.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: claveVapid(D.vapid) });
+    }).catch(function () {
+      throw new Error('Este navegador no deja activar el aviso. Mantenga la página abierta: al llegar la hora también avisa desde aquí.');
+    });
+  }).then(function (sub) { return llamar('aviso', { id: id, sub: sub.toJSON() }); })
+    .then(function () { guardar('aviso.' + id, '1'); if (S.ev) toast('Le avisaremos a las ' + partes(S.ev.fotoDesdeMs).hm + '.'); })
+    .catch(function (e) { S.errorFoto = mensajeError(e); })
+    .then(function () { pintarFoto(); });
+}
+// Aviso desde la propia página, por si sigue abierta (en segundo plano o a la vista).
+function avisarAhora(ev) {
+  if (AV.avisados[ev.id]) return;
+  AV.avisados[ev.id] = true;
+  if (document.visibilityState === 'visible') {
+    toast('Ya puede hacer la foto del evento.');
+    try { if (navigator.vibrate) navigator.vibrate([200, 100, 200]); } catch (e) { /* sin vibración */ }
+  } else if (AV.sw && window.Notification && Notification.permission === 'granted') {
+    AV.sw.showNotification('Ya puede hacer la foto', { body: 'El evento lleva ' + D.minutosFoto + ' minutos: haga la foto donde se vea toda la congregación.', tag: 'foto', renotify: true, requireInteraction: true, icon: 'icono-192.png', badge: 'icono-aviso.png', vibrate: [200, 100, 200, 100, 300] }).catch(function () {});
+  }
+}
+function programarAvisoLocal() {
+  clearTimeout(AV.t);
+  if (!S.ev || S.ev.estado !== 'Abierto' || (S.ev.fotos || []).length) return;
+  var falta = S.ev.fotoDesdeMs - ahora();
+  if (falta > 0) { delete AV.avisados[S.ev.id]; AV.t = setTimeout(function () { if (S.vista === 'registro') pintarFoto(); }, Math.min(falta + 1000, 2147483000)); }
 }
 
 function reducir(file) {
@@ -976,8 +1132,25 @@ function subirFoto(file) {
 }
 
 // ── Datos del evento (durante el registro) ────────────────────────
+function abrirDatosEv() {
+  if (!S.ev) return;
+  cerrarHoja(); pintarDatosEvento();
+  S.hojaEv = true; $('hoja-ev').hidden = false; $('velo').hidden = false; document.body.classList.add('con-hoja');
+  setTimeout(function () { $('hoja-ev-x').focus({ preventScroll: true }); }, 30);
+}
+function cerrarDatosEv() {
+  if (!S.hojaEv) return;
+  S.hojaEv = false; $('hoja-ev').hidden = true;
+  if (!S.hoja) { $('velo').hidden = true; document.body.classList.remove('con-hoja'); }
+}
+function pintarMover() {
+  var f = $('e-fecha').value, h = $('e-hora').value, cambia = S.ev && (f !== S.ev.fecha || h !== S.ev.hora);
+  $('e-mover').hidden = !cambia;
+  if (cambia) $('e-mover').textContent = 'Al guardar, este registro pasará al ' + (f ? fechaLarga(f) : '—') + ' a las ' + (h || '—') + ', con todos sus asistentes.';
+}
 function pintarDatosEvento() {
   var ev = S.ev;
+  $('e-fecha').value = ev.fecha; $('e-fecha').min = sumarDias(hoyIso(), -7); $('e-fecha').max = sumarDias(hoyIso(), 7); $('e-hora').value = ev.hora; pintarMover();
   opciones($('e-tipo'), D.tiposEvento, ev.tipo);
   opciones($('e-comite'), D.comites, ev.comite, 'Sin indicar');
   $('e-dirige').value = ev.dirige; $('e-predica').value = ev.predica; $('e-limpieza').value = ev.limpieza || ''; $('e-tema').value = ev.tema; $('e-real').value = ev.horaReal;
@@ -987,9 +1160,10 @@ function pintarDatosEvento() {
 function guardarDatosEvento(campos, boton) {
   if (boton) { boton.disabled = true; }
   return llamar('actualizarEvento', { id: S.ev.id, campos: campos }).then(function (ev) {
-    S.ev = ev; pintarDatosEvento(); pintarRegistro(); toast('Datos del evento guardados.');
-  }).catch(function (e) { error('e-err', mensajeError(e)); S.errorFoto = mensajeError(e); pintarFoto(); })
-    .then(function () { if (boton) boton.disabled = false; });
+    S.ev = ev; actualizarEnLista(ev); pintarDatosEvento(); pintarRegistro(); toast('Datos del evento guardados.'); programarAvisoLocal();
+    return true;
+  }).catch(function (e) { error('e-err', mensajeError(e)); if (!S.hojaEv) { S.errorFoto = mensajeError(e); pintarFoto(); } return false; })
+    .then(function (ok) { if (boton) boton.disabled = false; return ok; });
 }
 
 // ── Cerrar ────────────────────────────────────────────────────────
@@ -1070,15 +1244,15 @@ $('otro').addEventListener('click', function () {
   if (!porValido()) return;
   var hm = horaAhora().split(':');
   S.borrador = { fecha: hoyIso(), hora: pad(hm[0]) + ':' + pad(Math.floor(+hm[1] / 15) * 15), tipo: 'Culto', comite: '', tema: '', dirige: '', predica: '', origen: '' };
-  pintarDatos(); ir('datos');
+  pintarDatos(); pintarSugerencias(sugerencias()); ir('datos');
 });
 $('abrir').addEventListener('click', abrirNuevo);
 
 $('buscar').addEventListener('input', function () { $('nuevo').hidden = true; if (this.value.trim() && S.pest !== 'todos') S.pest = 'todos'; pintarFichas(); });
 $('add-vis').addEventListener('click', function () { abrirNuevo2($('buscar').value); });
 $('ir-buscar').addEventListener('click', function () { window.scrollTo({ top: 0, behavior: 'smooth' }); setTimeout(function () { $('buscar').focus({ preventScroll: true }); }, 250); });
-$('velo').addEventListener('click', cerrarHoja);
-document.addEventListener('keydown', function (e) { if (e.key === 'Escape' && S.hoja) cerrarHoja(); });
+$('velo').addEventListener('click', function () { cerrarHoja(); cerrarDatosEv(); });
+document.addEventListener('keydown', function (e) { if (e.key !== 'Escape') return; if (S.hojaEv) cerrarDatosEv(); else if (S.hoja) cerrarHoja(); });
 $('buscar').addEventListener('keydown', function (e) {
   if (e.key !== 'Enter') return;
   e.preventDefault();
@@ -1095,8 +1269,19 @@ $('nv-tipos').addEventListener('change', function () {
 $('nv-ok').addEventListener('click', registrarNuevo);
 $('nv-cancelar').addEventListener('click', function () { $('nuevo').hidden = true; $('buscar').focus(); });
 $('e-guardar').addEventListener('click', function () {
-  guardarDatosEvento({ tipo: $('e-tipo').value, comite: $('e-comite').value, dirige: $('e-dirige').value.trim(), predica: $('e-predica').value.trim(), limpieza: $('e-limpieza').value.trim(), tema: $('e-tema').value.trim(), horaReal: $('e-real').value }, this);
+  var c = { tipo: $('e-tipo').value, comite: $('e-comite').value, dirige: $('e-dirige').value.trim(), predica: $('e-predica').value.trim(), limpieza: $('e-limpieza').value.trim(), tema: $('e-tema').value.trim(), horaReal: $('e-real').value };
+  var f = $('e-fecha').value, h = $('e-hora').value;
+  if (!f) { error('e-err', 'Elija la fecha.'); return; }
+  if (!/^\d{2}:\d{2}$/.test(h)) { error('e-err', 'Escriba la hora prevista.'); return; }
+  if (f !== S.ev.fecha || h !== S.ev.hora) { c.fecha = f; c.hora = h; }
+  error('e-err', '');
+  guardarDatosEvento(c, this).then(function (ok) { if (ok) cerrarDatosEv(); });
 });
+$('e-cancelar').addEventListener('click', cerrarDatosEv);
+$('hoja-ev-x').addEventListener('click', cerrarDatosEv);
+$('ver-datos').addEventListener('click', abrirDatosEv);
+$('e-fecha').addEventListener('input', pintarMover);
+$('e-hora').addEventListener('input', pintarMover);
 $('ir-cerrar').addEventListener('click', function () { pintarCerrar(); ir('cerrar'); });
 $('c-ok').addEventListener('click', cerrar);
 $('reabrir').addEventListener('click', function () {
@@ -1117,6 +1302,13 @@ document.addEventListener('click', function (ev) {
     return;
   }
   if (t.hasAttribute('data-ev')) { elegirEvento(+t.getAttribute('data-ev')); return; }
+  if (t.hasAttribute('data-sug')) {
+    var k = t.getAttribute('data-sug');
+    if (k !== 'no' && S.sugs && S.sugs[+k]) { S.borrador = Object.assign({}, S.sugs[+k]); pintarDatos(); }
+    pintarSugerencias([]); window.scrollTo({ top: 0, behavior: 'smooth' });
+    return;
+  }
+  if (t.id === 'avisar-foto') { pedirAviso(t); return; }
   if (t.hasAttribute('data-f')) {
     var f = S.fmap[t.getAttribute('data-f')]; if (!f) return;
     if (f.a) abrirHoja(f.a.rid); else if (f.p) registrarPersona(f.p);
@@ -1183,7 +1375,14 @@ var PRUEBA = (function () {
     var luego = partes(ini + 150 * 60000);
     if (luego.iso === hoy) p.push({ fecha: hoy, hora: luego.hm, tipo: 'Vigilia', comite: 'Intercesión', tema: '', dirige: '', predica: '', origen: 'Programación' });
     p = p.filter(function (e) { return !ya[e.hora]; });
-    return abiertos.concat(p).sort(function (a, b) { return a.hora.localeCompare(b.hora); });
+    p.forEach(function (e) { e.grupo = 'hoy'; });
+    abiertos.forEach(function (e) { e.grupo = 'hoy'; });
+    // Para la demostración: el culto de ayer sin registrar y el de mañana, por adelantado.
+    var ayer = sumarDias(hoy, -1), manana = sumarDias(hoy, 1);
+    var atras = [{ fecha: ayer, hora: '11:00', tipo: 'Culto', comite: 'Dorcas', tema: '', dirige: '', predica: '', origen: 'Horario habitual', grupo: 'atrasado' }].filter(function (e) { return !abiertos.some(function (x) { return x.fecha === e.fecha; }); });
+    var adel = [{ fecha: manana, hora: '19:30', tipo: 'Culto', comite: 'Juventud', tema: '', dirige: '', predica: '', origen: 'Horario habitual', grupo: 'adelantado' }].filter(function (e) { return !abiertos.some(function (x) { return x.fecha === e.fecha; }); });
+    var orden = function (a, b) { return (a.fecha + a.hora).localeCompare(b.fecha + b.hora); };
+    return atras.concat(abiertos.concat(p).sort(orden), adel);
   }
   function llamar(fn, a) {
     return new Promise(function (r) { setTimeout(r, fn === 'subirFoto' ? 900 : 350); }).then(function () {
@@ -1202,6 +1401,7 @@ var PRUEBA = (function () {
         return completo(eventos[id]);
       }
       if (fn === 'fotos') return { fotos: fotosPrueba() };
+      if (fn === 'config') return {};
       var e = eventos[a.id];
       if (!e) throw new Error('Este evento ya no está en la hoja. Vuelva al inicio.');
       if (fn === 'leerEvento') return completo(e);
@@ -1221,6 +1421,7 @@ var PRUEBA = (function () {
         Object.keys(a.campos || {}).forEach(function (k) { if (k === 'estado') e.estado = a.campos.estado; else e[k] = a.campos[k]; });
         return completo(e);
       }
+      if (fn === 'aviso') return { ok: true, hora: partes(completo(e).fotoDesdeMs).hm };
       if (fn === 'subirFoto') {
         var c = completo(e);
         if (Date.now() < c.fotoDesdeMs) throw new Error('Todavía no: la foto se puede hacer a partir de las ' + partes(c.fotoDesdeMs).hm + ', cuando el evento lleve ' + D.minutosFoto + ' minutos. Así sale la congregación completa.');
@@ -1249,6 +1450,12 @@ var PRUEBA = (function () {
 if (DEMO && !S.clave) { S.clave = 'prueba'; }
 if (DEMO && !S.por) { S.por = 'Hna. Marta León'; }
 if (!DEMO && !EN_GOOGLE) llamar('config').then(aplicarConfig).catch(function () { /* se usa la lista incluida */ });
+iniciarAvisos();
+// En PC y tableta la columna izquierda se queda fija debajo de la barra: se mide su alto.
+(function () {
+  var b = document.querySelector('#v-registro .barra'); if (!b || !window.ResizeObserver) return;
+  new ResizeObserver(function () { document.documentElement.style.setProperty('--alto-barra', (b.offsetHeight + 12) + 'px'); }).observe(b);
+})();
 cargar();
 })();
 </script>
