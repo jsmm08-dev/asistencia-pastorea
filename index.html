@@ -1,0 +1,1256 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta name="description" content="Registro de asistencia de recepción para los eventos de la congregación IPUE de Alcorcón. Necesita la clave de recepción.">
+  <meta property="og:title" content="Control de Asistencia · Recepción">
+  <meta property="og:description" content="Registre aquí a quienes llegan a cada evento. Necesita la clave de recepción.">
+  <meta name="robots" content="noindex">
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%2300338D'/%3E%3Ccircle cx='25' cy='22' r='8' fill='%23fff'/%3E%3Cpath d='M10 50c0-10 7-16 15-16s15 6 15 16z' fill='%23fff'/%3E%3Cpath d='M37 31l6 6 12-13' fill='none' stroke='%2336B6E8' stroke-width='5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E">
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#00338D">
+  <title>Control de Asistencia · Recepción IPUE</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Source+Sans+3:ital,wght@0,400;0,600;0,700;0,800;1,400&display=swap" rel="stylesheet">
+  <style>
+    /* Recepción en la puerta: una columna, botones grandes, contadores siempre a la vista.
+       Azul IPUE para la marca; un color fijo por tipo de asistente. */
+    :root{
+      --marino:#00338D;--marino-osc:#002A74;--azul:#009FDA;--azul-txt:#0077A8;--azul-suave:#EBF7FC;
+      --tinta:#1A1A1A;--suave:#4B5563;--tenue:#6B7280;--fondo:#F2F4F8;--sup:#FFFFFF;--sup2:#F7F9FB;--linea:#DCE1E8;--linea2:#C3CBD6;
+      --t-b:#1F5FAE;--t-b-s:#E6F0FB;--t-v:#B44A1F;--t-v-s:#FDEDE5;--t-s:#137A55;--t-s-s:#E2F5EE;--t-m:#8A5D00;--t-m-s:#FCF3DC;
+      --ok:#267247;--ok-s:#EEF6F2;--mal:#B4412F;--mal-s:#FDF0EE;--aviso:#7A4F06;--aviso-s:#FAF1DC;
+      --letra:'Source Sans 3','Segoe UI',Roboto,Arial,sans-serif;
+      color-scheme:light;
+    }
+    *,*::before,*::after{box-sizing:border-box}
+    html{-webkit-text-size-adjust:100%;text-size-adjust:100%}
+    body{margin:0;background:var(--fondo);color:var(--tinta);font:400 17px/1.45 var(--letra);-webkit-font-smoothing:antialiased}
+    button,input,select,textarea{font:inherit;color:inherit}
+    button{cursor:pointer}
+    [hidden]{display:none!important}
+    :focus-visible{outline:3px solid var(--azul);outline-offset:2px}
+    .sr{position:absolute!important;width:1px!important;height:1px!important;overflow:hidden!important;clip:rect(0 0 0 0)!important;white-space:nowrap!important}
+
+    .banda{background:var(--marino);color:#fff;padding-top:env(safe-area-inset-top,0px)}
+    .banda-in{max-width:640px;margin:0 auto;padding:18px max(16px,env(safe-area-inset-right,0px)) 20px max(16px,env(safe-area-inset-left,0px));display:flex;flex-direction:column;gap:12px}
+    .marca{display:flex;align-items:center;gap:14px}
+    .plato{background:#fff;border-radius:12px;padding:5px 7px;display:flex;flex-shrink:0}
+    .plato img{width:74px;height:auto;display:block}
+    .eyebrow{margin:0;font-size:13px;font-weight:700;letter-spacing:1.4px;text-transform:uppercase;color:#9FDCF4}
+    .banda h1{margin:2px 0 0;font-size:28px;line-height:1.1;font-weight:800;letter-spacing:-.3px}
+    .versiculo{margin:0;font-size:15px;line-height:1.4;color:#DCE6F7;border-left:3px solid var(--azul);padding-left:10px}
+    .versiculo b{color:#fff;font-weight:700}
+    .banda.mini .versiculo{display:none}
+    .banda.mini .banda-in{padding-top:10px;padding-bottom:10px}
+    .banda.mini .plato img{width:46px}
+    .banda.mini h1{font-size:20px}
+    .demo{max-width:608px;margin:12px max(16px,env(safe-area-inset-left,0px)) 0;margin-inline:auto;padding:10px 14px;background:#FFF2BD;border:1px solid #EFD67E;border-radius:12px;color:#5E4300;font-size:15px;font-weight:600;text-align:center}
+
+    .pagina{max-width:640px;margin:0 auto;padding:16px max(16px,env(safe-area-inset-right,0px)) calc(40px + env(safe-area-inset-bottom,0px)) max(16px,env(safe-area-inset-left,0px))}
+    .vista{display:flex;flex-direction:column;gap:16px}
+    h2{margin:0;font-size:24px;line-height:1.15;font-weight:800;color:var(--marino-osc);text-wrap:balance}
+    h3{margin:0;font-size:19px;font-weight:700;color:var(--marino-osc)}
+    .sub{margin:4px 0 0;color:var(--suave)}
+    .tarjeta{background:var(--sup);border:1px solid var(--linea);border-radius:16px;padding:18px;display:flex;flex-direction:column;gap:14px}
+
+    .campo{display:flex;flex-direction:column;gap:6px;min-width:0}
+    .campo label,.et{font-size:15px;font-weight:700;color:var(--suave)}
+    input[type=text],input[type=search],input[type=password],input[type=date],input[type=time],select,textarea{width:100%;min-height:52px;padding:10px 14px;border:1.5px solid var(--linea2);border-radius:12px;background:var(--sup);font-size:18px;outline:none}
+    textarea{min-height:80px;resize:vertical;line-height:1.4}
+    input:focus,select:focus,textarea:focus{border-color:var(--marino);box-shadow:0 0 0 3px rgba(0,51,141,.15)}
+    .rejilla{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+    .rejilla .ancho{grid-column:1/-1}
+    .err{margin:0;padding:10px 12px;border-radius:10px;background:var(--mal-s);color:var(--mal);font-weight:600;font-size:16px}
+    .info{margin:0;padding:10px 12px;border-radius:10px;background:var(--azul-suave);color:var(--azul-txt);font-size:15px}
+
+    .btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:52px;padding:0 20px;border-radius:12px;border:1.5px solid var(--linea2);background:var(--sup);font-size:18px;font-weight:700;color:var(--marino-osc)}
+    .btn-pri{background:var(--marino);border-color:var(--marino);color:#fff}
+    .btn-pri:active{background:var(--marino-osc)}
+    .btn[disabled]{opacity:.55;cursor:default}
+    .btn-ancho{width:100%}
+    .link{background:none;border:0;padding:8px 4px;min-height:44px;color:var(--azul-txt);font-weight:700;font-size:16px}
+    .volver{align-self:flex-start;background:none;border:0;padding:6px 6px 6px 0;min-height:44px;font-size:17px;font-weight:700;color:var(--azul-txt)}
+
+    /* Inicio: eventos de hoy */
+    .eventos{display:flex;flex-direction:column;gap:10px}
+    .ev{display:flex;gap:14px;align-items:flex-start;width:100%;text-align:left;padding:14px;border-radius:16px;border:1.5px solid var(--linea);background:var(--sup)}
+    .ev:active{border-color:var(--marino)}
+    .ev.abierto{border-color:var(--t-s);box-shadow:inset 4px 0 0 var(--t-s)}
+    .ev-hora{flex-shrink:0;min-width:66px;text-align:center;padding:8px 0;border-radius:12px;background:var(--t-b-s);color:var(--marino-osc);font-size:22px;font-weight:800;font-variant-numeric:tabular-nums}
+    .ev-c{flex:1;min-width:0;display:flex;flex-direction:column;gap:3px}
+    .ev-t{font-size:19px;font-weight:700;line-height:1.2}
+    .ev-m{font-size:15px;color:var(--suave);overflow-wrap:anywhere}
+    .pils{display:flex;flex-wrap:wrap;gap:6px;margin-top:4px}
+    .pil{font-size:14px;font-weight:700;padding:3px 10px;border-radius:999px;background:var(--sup2);color:var(--suave);border:1px solid var(--linea)}
+    .pil.verde{background:var(--ok-s);color:var(--ok);border-color:transparent}
+    .pil.azul{background:var(--azul-suave);color:var(--azul-txt);border-color:transparent}
+    .pil.ambar{background:var(--aviso-s);color:var(--aviso);border-color:transparent}
+    .vacio{padding:18px;border:1.5px dashed var(--linea2);border-radius:16px;color:var(--suave);background:var(--sup)}
+
+    /* Registro */
+    .barra{position:sticky;top:0;z-index:5;margin:-16px calc(-1 * max(16px,env(safe-area-inset-right,0px))) 0 calc(-1 * max(16px,env(safe-area-inset-left,0px)));padding:10px max(16px,env(safe-area-inset-right,0px)) 10px max(16px,env(safe-area-inset-left,0px));background:rgba(242,244,248,.96);backdrop-filter:blur(6px);border-bottom:1px solid var(--linea);display:flex;flex-direction:column;gap:10px}
+    .barra-f{display:flex;align-items:center;gap:10px}
+    .atras{width:44px;height:44px;flex-shrink:0;border-radius:12px;border:1.5px solid var(--linea2);background:var(--sup);font-size:24px;line-height:1;color:var(--marino-osc)}
+    .barra-t{flex:1;min-width:0;display:flex;flex-direction:column}
+    .barra-t b{font-size:18px;line-height:1.2;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+    .barra-t span{font-size:14px;color:var(--suave);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+    .sync{flex-shrink:0;font-size:13px;font-weight:700;padding:4px 10px;border-radius:999px;background:var(--ok-s);color:var(--ok)}
+    .sync.pend{background:var(--aviso-s);color:var(--aviso)}
+    .sync.mal{background:var(--mal-s);color:var(--mal)}
+    .contadores{display:grid;grid-template-columns:repeat(4,minmax(0,1fr)) minmax(0,1.15fr);gap:6px}
+    .cont{display:flex;flex-direction:column;align-items:center;padding:7px 2px;border-radius:12px;background:var(--cs);color:var(--c)}
+    .cont b{font-size:25px;line-height:1.05;font-weight:800;font-variant-numeric:tabular-nums}
+    .cont span{font-size:12px;font-weight:700;text-align:center;line-height:1.15}
+    .cont.total{background:linear-gradient(135deg,var(--marino),#06224A);color:#fff}
+    .cont.total span{color:#DCE6F7}
+    .adm{margin:-2px 0 0;font-size:14px;color:var(--suave);text-align:center}
+    .adm b{color:var(--tinta);font-variant-numeric:tabular-nums}
+    .lupa{display:grid;place-items:center}
+
+    .buscador{display:flex;flex-direction:column;gap:8px;scroll-margin-top:200px}
+    .buscador input{font-size:20px;min-height:58px;border-width:2px;border-color:var(--marino)}
+    .btn-vis{width:100%;border-color:var(--azul-txt);color:var(--azul-txt);background:var(--azul-suave)}
+
+    /* Pase de lista: una ficha por persona (diseño de EDEM). Tocar = presente. */
+    .pestanas{display:flex;gap:6px;overflow-x:auto;scrollbar-width:none;padding:2px;margin:0 -2px}
+    .pestanas::-webkit-scrollbar{display:none}
+    .pest{flex-shrink:0;display:inline-flex;align-items:center;gap:6px;min-height:42px;padding:0 14px;border-radius:999px;border:1.5px solid var(--linea2);background:var(--sup);font-size:15px;font-weight:700;color:var(--suave);white-space:nowrap}
+    .pest b{font-weight:800;color:var(--tinta);font-variant-numeric:tabular-nums}
+    .pest[aria-pressed="true"]{background:var(--marino);border-color:var(--marino);color:#fff}
+    .pest[aria-pressed="true"] b{color:#fff}
+    .fichas{display:grid;grid-template-columns:repeat(auto-fill,minmax(104px,1fr));gap:8px}
+    .ficha{position:relative;display:flex;flex-direction:column;align-items:center;gap:5px;min-width:0;min-height:136px;padding:12px 6px 10px;border-radius:14px;border:1.5px solid var(--linea);background:var(--sup);text-align:center;transition:transform .08s}
+    .ficha:active{transform:scale(.97)}
+    .ficha .av{position:relative;display:block}
+    .ficha .ini{width:54px;height:54px;border-radius:50%;display:grid;place-items:center;font-size:19px;font-weight:800;letter-spacing:.5px;background:var(--cs);color:var(--c)}
+    .ficha .fp{width:54px;height:54px;border-radius:50%;display:block;object-fit:cover;background:var(--cs)}
+    .ficha.si .fp{box-shadow:0 0 0 2.5px var(--ok)}
+    .hoja-cab .fp{width:52px;height:52px;border-radius:50%;object-fit:cover;flex-shrink:0;background:var(--cs)}
+    .ficha .av i{position:absolute;right:-3px;bottom:-3px;width:24px;height:24px;border-radius:50%;display:grid;place-items:center;background:var(--ok);color:#fff;border:2px solid var(--sup)}
+    .ficha .nom{font-size:15px;font-weight:700;line-height:1.2;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;overflow-wrap:anywhere}
+    .ficha .chip{font-size:12px;padding:2px 8px;white-space:normal;line-height:1.2}
+    .ficha .hora{display:flex;flex-direction:column;align-items:center;line-height:1.15;color:var(--ok)}
+    .ficha .hora>span{display:inline-flex;align-items:center;gap:5px;font-size:11.5px;font-weight:800;letter-spacing:.5px;text-transform:uppercase}
+    .ficha .hora b{font-size:14px;font-weight:700;font-variant-numeric:tabular-nums}
+    .ficha .nota{font-size:12px;line-height:1.25;color:var(--suave);font-style:italic;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;overflow-wrap:anywhere}
+    .ficha.si{border:2.5px solid var(--ok);background:var(--ok-s);padding:11px 5px 9px}
+    .ficha.si .ini{background:var(--c);color:#fff}
+    .ficha.si::after{content:"";position:absolute;top:8px;right:8px;width:16px;height:16px;opacity:.55;background:no-repeat center/16px url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23267247' stroke-width='2.4' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M4 20h4L19 9l-4-4L4 16z'/%3E%3C/svg%3E")}
+    .ficha .pend-d{width:8px;height:8px;border-radius:50%;background:var(--aviso)}
+    .ficha.mas{border:2px dashed var(--azul-txt);background:var(--azul-suave);color:var(--azul-txt);justify-content:center}
+    .ficha.mas .ini{background:var(--sup);color:var(--azul-txt);font-size:26px}
+    .ficha.mas .chip{background:var(--sup);color:var(--azul-txt)}
+
+    /* Avisos abajo (deshacer, familia) y ficha abierta */
+    .dock{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(12px + env(safe-area-inset-bottom,0px));z-index:20;width:min(600px,calc(100% - 24px));display:flex;flex-direction:column;gap:8px;pointer-events:none}
+    .dock>*{pointer-events:auto}
+    #v-registro{padding-bottom:110px}
+    .velo{position:fixed;inset:0;z-index:30;background:rgba(10,20,40,.38)}
+    .hoja{position:fixed;left:50%;transform:translateX(-50%);bottom:0;z-index:31;width:min(640px,100%);max-height:88vh;overflow:auto;background:var(--sup);border-radius:20px 20px 0 0;padding:18px max(16px,env(safe-area-inset-right,0px)) calc(18px + env(safe-area-inset-bottom,0px)) max(16px,env(safe-area-inset-left,0px));box-shadow:0 -10px 40px rgba(0,0,0,.2);display:flex;flex-direction:column;gap:12px}
+    .hoja-cab{display:flex;align-items:flex-start;gap:10px}
+    .hoja-cab>div{flex:1;min-width:0}
+    .hoja .as-ed{padding:0;background:none}
+    .cerrar-h{width:44px;height:44px;flex-shrink:0;border-radius:12px;border:1.5px solid var(--linea2);background:var(--sup);font-size:26px;line-height:1;color:var(--suave)}
+    body.con-hoja{overflow:hidden}
+    .res{display:flex;align-items:center;gap:10px;width:100%;min-height:56px;text-align:left;padding:8px 14px;border:0;border-bottom:1px solid var(--linea);background:none}
+    .res:last-child{border-bottom:0}
+    .res:active{background:var(--sup2)}
+    .res-c{flex:1;min-width:0;display:flex;flex-direction:column}
+    .res-n{font-size:18px;font-weight:700;overflow-wrap:anywhere}
+    .res-m{font-size:14px;color:var(--suave)}
+    .res[disabled]{cursor:default;opacity:.6}
+    .res.mas{color:var(--azul-txt);font-weight:700;font-size:17px}
+    .chip{flex-shrink:0;font-size:13px;font-weight:700;padding:3px 9px;border-radius:999px;background:var(--cs);color:var(--c);white-space:nowrap}
+    .t-b{--c:var(--t-b);--cs:var(--t-b-s)}.t-v{--c:var(--t-v);--cs:var(--t-v-s)}.t-s{--c:var(--t-s);--cs:var(--t-s-s)}.t-m{--c:var(--t-m);--cs:var(--t-m-s)}
+
+    #nuevo,#foto,#datos-ev{scroll-margin-top:170px}
+    .familia{background:var(--sup);border:1.5px solid var(--azul);border-radius:14px;padding:12px 14px;display:flex;flex-direction:column;gap:8px;box-shadow:0 10px 30px rgba(0,0,0,.18)}
+    .familia p{margin:0;font-weight:700;color:var(--azul-txt)}
+    .fam-ops{display:flex;flex-wrap:wrap;gap:8px}
+    .fam-ops button{min-height:44px;padding:0 14px;border-radius:999px;border:1.5px solid var(--linea2);background:var(--sup);font-weight:700;font-size:16px}
+    .fam-ops .todos{background:var(--azul-txt);border-color:var(--azul-txt);color:#fff}
+
+    .tipos{border:0;margin:0;padding:0;display:grid;grid-template-columns:1fr 1fr;gap:8px}
+    .tipos legend{padding:0;margin:0 0 6px;font-size:15px;font-weight:700;color:var(--suave)}
+    .tipo{position:relative;display:flex}
+    .tipo input{position:absolute;opacity:0;width:1px;height:1px}
+    .tipo span{flex:1;display:flex;flex-direction:column;gap:2px;padding:10px 12px;border-radius:12px;border:1.5px solid var(--linea2);background:var(--sup);min-height:62px}
+    .tipo b{font-size:17px}
+    .tipo small{font-size:13px;color:var(--suave);line-height:1.25}
+    .tipo input:checked+span{border:2.5px solid var(--c);background:var(--cs);padding:9px 11px}
+    .tipo input:checked+span b{color:var(--c)}
+    .tipo input:focus-visible+span{outline:3px solid var(--azul);outline-offset:2px}
+    .check{display:flex;gap:10px;align-items:center;min-height:44px;font-size:17px}
+    .check input{width:22px;height:22px;accent-color:var(--marino)}
+    .acc{display:flex;gap:10px;flex-wrap:wrap}
+    .acc .btn{flex:1 1 140px}
+
+    .foto{background:var(--sup);border:1px solid var(--linea);border-radius:16px;padding:14px 16px;display:flex;flex-direction:column;gap:10px}
+    .foto.cerrada{background:var(--sup2)}
+    .foto.lista{border:2px solid var(--t-s)}
+    .foto-f{display:flex;align-items:center;gap:12px}
+    .foto-ico{width:44px;height:44px;flex-shrink:0;border-radius:12px;display:grid;place-items:center;background:var(--t-b-s);color:var(--marino)}
+    .foto.lista .foto-ico{background:var(--t-s-s);color:var(--t-s)}
+    .foto-c{flex:1;min-width:0}
+    .foto-c b{display:block;font-size:17px}
+    .foto-c span{font-size:15px;color:var(--suave)}
+    .progreso{height:8px;border-radius:999px;background:var(--linea);overflow:hidden}
+    .progreso i{display:block;height:100%;background:var(--azul);border-radius:999px}
+    .fotos-hechas{display:flex;flex-wrap:wrap;gap:8px}
+    .fotos-hechas img{width:84px;height:64px;object-fit:cover;border-radius:8px;border:1px solid var(--linea)}
+
+    .lista-cab{display:flex;align-items:baseline;justify-content:space-between;gap:8px}
+    .lista{list-style:none;margin:0;padding:0;background:var(--sup);border:1px solid var(--linea);border-radius:16px;overflow:hidden}
+    .lista:empty{display:none}
+    .as{border-bottom:1px solid var(--linea)}
+    .as:last-child{border-bottom:0}
+    .as-b{display:flex;align-items:center;gap:10px;width:100%;min-height:56px;padding:8px 14px;text-align:left;border:0;background:none}
+    .as-h{flex-shrink:0;width:46px;font-size:15px;font-weight:700;color:var(--suave);font-variant-numeric:tabular-nums}
+    .as-c{flex:1;min-width:0;display:flex;flex-direction:column}
+    .as-n{font-size:17px;font-weight:600;overflow-wrap:anywhere}
+    .as-a{font-size:14px;color:var(--suave);font-style:italic;overflow-wrap:anywhere}
+    .as-p{flex-shrink:0;width:10px;height:10px;border-radius:50%;background:var(--aviso)}
+    .as-ed{padding:4px 14px 14px;display:flex;flex-direction:column;gap:10px;background:var(--sup2)}
+    .nuevo-pil{font-size:12px;font-weight:700;color:var(--ok);text-transform:uppercase;letter-spacing:.5px}
+
+    details.datos-ev{background:var(--sup);border:1px solid var(--linea);border-radius:16px}
+    details.datos-ev summary{padding:14px 16px;min-height:52px;font-weight:700;font-size:17px;color:var(--marino-osc);cursor:pointer}
+    details.datos-ev .dentro{padding:0 16px 16px;display:flex;flex-direction:column;gap:12px}
+    .btn-cerrar{background:var(--sup);border:2px solid var(--marino);color:var(--marino)}
+
+    .resumen{display:grid;grid-template-columns:auto 1fr;gap:6px 14px;margin:0}
+    .resumen dt{color:var(--suave)}
+    .resumen dd{margin:0;font-weight:700;overflow-wrap:anywhere}
+    .gracias{text-align:center;align-items:center}
+    .sello{width:72px;height:72px;border-radius:50%;display:grid;place-items:center;background:var(--ok-s);color:var(--ok)}
+
+    .toast{display:flex;align-items:center;gap:10px;padding:12px 14px;border-radius:14px;background:#14213D;color:#fff;box-shadow:0 10px 30px rgba(0,0,0,.25);font-size:16px}
+    .toast span{flex:1;min-width:0}
+    .toast button{flex-shrink:0;background:none;border:1.5px solid rgba(255,255,255,.5);color:#fff;border-radius:10px;min-height:40px;padding:0 12px;font-weight:700}
+    .pie{text-align:center;color:var(--tenue);font-size:14px;margin-top:8px}
+
+    @media (max-width:420px){
+      .rejilla{grid-template-columns:1fr}
+      .tipos{grid-template-columns:1fr}
+      .cont b{font-size:21px}
+      .cont span{font-size:11px}
+      .banda h1{font-size:25px}
+    }
+    @media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+  </style>
+</head>
+<body>
+
+<header class="banda" id="banda">
+  <div class="banda-in">
+    <div class="marca">
+      <span class="plato"><img src="data:image/webp;base64,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" alt="Iglesia Pentecostal Unida en Europa"></span>
+      <div><p class="eyebrow">Recepción · <span id="cong">Alcorcón</span></p><h1>Control de Asistencia</h1></div>
+    </div>
+    <p class="versiculo">«Yo me alegré con los que me decían: A la casa de Jehová iremos.» <b>Salmos 122:1</b></p>
+  </div>
+</header>
+
+<div id="aviso-demo" class="demo" hidden>Vista de prueba con datos inventados: nada de lo que registre aquí se guarda.</div>
+<main class="pagina">
+
+  <!-- Clave de recepción -->
+  <section class="vista" id="v-clave" hidden>
+    <div class="tarjeta">
+      <div><h2>Entrar en recepción</h2><p class="sub">Escriba la clave de recepción que le dio el pastor. Este móvil la recordará.</p></div>
+      <div class="campo"><label for="clave">Clave de recepción</label><input id="clave" type="password" autocomplete="current-password" enterkeyhint="go"></div>
+      <p class="err" id="clave-err" role="alert" hidden></p>
+      <button class="btn btn-pri btn-ancho" type="button" id="entrar">Entrar</button>
+    </div>
+  </section>
+
+  <!-- Cargando -->
+  <section class="vista" id="v-cargando" hidden>
+    <div class="tarjeta"><p class="sub" id="cargando-txt" style="margin:0">Cargando los eventos de hoy…</p><p class="err" id="cargando-err" role="alert" hidden></p><button class="btn" type="button" id="reintentar" hidden>Reintentar</button></div>
+  </section>
+
+  <!-- Eventos de hoy -->
+  <section class="vista" id="v-inicio" hidden>
+    <div><h2 id="hoy-t">Hoy</h2><p class="sub">Elija el evento en el que está recibiendo a los hermanos.</p></div>
+    <div class="campo"><label for="por">Quién recibe hoy</label><input id="por" type="text" autocomplete="name" autocapitalize="words" maxlength="60" placeholder="Su nombre, p. ej. Hna. Marta León"></div>
+    <p class="err" id="inicio-err" role="alert" hidden></p>
+    <div class="eventos" id="eventos"></div>
+    <button class="btn btn-ancho" type="button" id="otro">＋ Otro evento</button>
+    <p class="pie"><button class="link" type="button" id="recargar">Actualizar la lista</button> · <button class="link" type="button" id="salir">Salir de este móvil</button></p>
+  </section>
+
+  <!-- Datos del evento antes de abrir -->
+  <section class="vista" id="v-datos" hidden>
+    <button class="volver" type="button" data-ir="inicio">‹ Eventos de hoy</button>
+    <div><h2>Datos del evento</h2><p class="sub" id="datos-origen"></p></div>
+    <div class="tarjeta">
+      <div class="rejilla">
+        <div class="campo"><label for="d-fecha">Fecha</label><input id="d-fecha" type="date"></div>
+        <div class="campo"><label for="d-hora">Hora de inicio</label><input id="d-hora" type="time"></div>
+        <div class="campo"><label for="d-tipo">Tipo de evento</label><select id="d-tipo"></select></div>
+        <div class="campo"><label for="d-comite">Comité encargado</label><select id="d-comite"></select></div>
+        <div class="campo ancho"><label for="d-tema">Tema</label><input id="d-tema" type="text" maxlength="200" placeholder="Si lo hay"></div>
+        <div class="campo"><label for="d-dirige">Dirige</label><input id="d-dirige" type="text" maxlength="120" autocapitalize="words"></div>
+        <div class="campo"><label for="d-predica">Predica</label><input id="d-predica" type="text" maxlength="120" autocapitalize="words"></div>
+        <div class="campo ancho"><label for="d-limpieza">Limpieza</label><input id="d-limpieza" type="text" maxlength="120" autocapitalize="words" placeholder="Si se sabe, p. ej. Familia López"></div>
+      </div>
+      <p class="info">Si hubo cambios de última hora (otro comité, otra persona que dirige o predica), corríjalos aquí. También podrá cambiarlos durante el evento.</p>
+      <p class="err" id="datos-err" role="alert" hidden></p>
+      <button class="btn btn-pri btn-ancho" type="button" id="abrir">Abrir el registro</button>
+    </div>
+  </section>
+
+  <!-- Registro de asistentes -->
+  <section class="vista" id="v-registro" hidden>
+    <div class="barra">
+      <div class="barra-f">
+        <button class="atras" type="button" data-ir="inicio" aria-label="Volver a los eventos de hoy">‹</button>
+        <div class="barra-t"><b id="r-titulo"></b><span id="r-sub"></span></div>
+        <span class="sync" id="sync" role="status">Guardado</span>
+        <button class="atras lupa" type="button" id="ir-buscar" aria-label="Buscar por nombre"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M20 20l-4-4"/></svg></button>
+      </div>
+      <div class="contadores" id="contadores" aria-live="polite"></div>
+      <p class="adm" id="adm"></p>
+    </div>
+
+    <div class="buscador" id="buscador">
+      <label for="buscar" class="et">Toque la ficha de cada persona según llega, o escriba su nombre</label>
+      <input id="buscar" type="search" autocomplete="off" autocorrect="off" autocapitalize="words" spellcheck="false" enterkeyhint="done" placeholder="Buscar por nombre…">
+      <button class="btn btn-vis" type="button" id="add-vis">＋ Añadir visitante o persona nueva</button>
+    </div>
+
+    <div class="tarjeta" id="nuevo" hidden>
+      <h3>Persona nueva</h3>
+      <div class="campo"><label for="nv-nombre">Nombre y apellidos</label><input id="nv-nombre" type="text" maxlength="120" autocapitalize="words"></div>
+      <label class="check"><input type="checkbox" id="nv-sin"> No sabemos su nombre</label>
+      <fieldset class="tipos" id="nv-tipos"><legend>¿Quién es?</legend></fieldset>
+      <div class="campo" id="nv-cong-c" hidden><label for="nv-cong">¿De qué congregación viene?</label><input id="nv-cong" type="text" maxlength="80" autocapitalize="words" list="congs"></div>
+      <label class="check" id="nv-menor-c" hidden><input type="checkbox" id="nv-menor"> Es menor de edad</label>
+      <div class="campo"><label for="nv-anot">Anotación</label><textarea id="nv-anot" maxlength="400" placeholder="Ej. primo del hno. Andrés; vino invitado por la hna. Lucía"></textarea></div>
+      <label class="check"><input type="checkbox" id="nv-primera" checked> Es la primera vez que viene</label>
+      <p class="err" id="nv-err" role="alert" hidden></p>
+      <div class="acc"><button class="btn btn-pri" type="button" id="nv-ok">Registrar</button><button class="btn" type="button" id="nv-cancelar">Cancelar</button></div>
+    </div>
+
+    <div class="foto" id="foto"></div>
+
+    <div class="pestanas" id="pestanas" role="toolbar" aria-label="Filtrar las fichas"></div>
+    <div class="fichas" id="fichas"></div>
+    <p class="vacio" id="fichas-vacio" hidden></p>
+
+    <details class="datos-ev" id="datos-ev">
+      <summary>Datos del evento</summary>
+      <div class="dentro">
+        <div class="rejilla">
+          <div class="campo"><label for="e-tipo">Tipo de evento</label><select id="e-tipo"></select></div>
+          <div class="campo"><label for="e-comite">Comité encargado</label><select id="e-comite"></select></div>
+          <div class="campo"><label for="e-dirige">Dirige</label><input id="e-dirige" type="text" maxlength="120" autocapitalize="words"></div>
+          <div class="campo"><label for="e-predica">Predica</label><input id="e-predica" type="text" maxlength="120" autocapitalize="words"></div>
+          <div class="campo ancho"><label for="e-limpieza">Limpieza</label><input id="e-limpieza" type="text" maxlength="120" autocapitalize="words"></div>
+          <div class="campo ancho"><label for="e-tema">Tema</label><input id="e-tema" type="text" maxlength="200"></div>
+          <div class="campo"><label for="e-real">Hora real de inicio</label><input id="e-real" type="time"></div>
+        </div>
+        <p class="sub" id="e-recepcion"></p>
+        <p class="err" id="e-err" role="alert" hidden></p>
+        <button class="btn btn-ancho" type="button" id="e-guardar">Guardar cambios</button>
+      </div>
+    </details>
+
+    <button class="btn btn-cerrar btn-ancho" type="button" id="ir-cerrar">Cerrar el registro</button>
+  </section>
+
+  <!-- Cerrar -->
+  <section class="vista" id="v-cerrar" hidden>
+    <button class="volver" type="button" data-ir="registro">‹ Seguir registrando</button>
+    <div><h2>Cerrar el registro</h2><p class="sub" id="c-titulo"></p></div>
+    <div class="tarjeta">
+      <dl class="resumen" id="c-resumen"></dl>
+      <p class="err" id="c-sinfoto" hidden></p>
+      <div class="campo"><label for="c-obs">Observaciones de recepción</label><textarea id="c-obs" maxlength="3000" placeholder="Incidencias, visitas importantes, algo que el pastor deba saber…"></textarea></div>
+      <p class="err" id="c-err" role="alert" hidden></p>
+      <button class="btn btn-pri btn-ancho" type="button" id="c-ok">Cerrar el registro</button>
+    </div>
+  </section>
+
+  <!-- Cerrado -->
+  <section class="vista" id="v-fin" hidden>
+    <div class="tarjeta gracias">
+      <span class="sello" aria-hidden="true"><svg width="38" height="38" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg></span>
+      <h2>Registro cerrado</h2>
+      <p class="sub" id="f-titulo" style="margin:0"></p>
+      <dl class="resumen" id="f-resumen" style="text-align:left"></dl>
+      <p style="margin:0">Gracias por servir en la recepción. Dios le bendiga.</p>
+      <div class="acc" style="width:100%"><button class="btn btn-pri" type="button" data-ir="inicio">Eventos de hoy</button><button class="btn" type="button" id="reabrir">Seguir registrando</button></div>
+    </div>
+  </section>
+</main>
+
+<datalist id="congs"></datalist>
+<input type="file" id="cam" accept="image/*" capture="environment" class="sr" tabindex="-1" aria-hidden="true">
+<div class="dock" id="dock">
+  <div class="familia" id="familia" hidden></div>
+  <div class="toast" id="toast" role="status" hidden><span id="toast-t"></span><button type="button" id="toast-b" hidden>Deshacer</button></div>
+</div>
+<div class="velo" id="velo" hidden></div>
+<section class="hoja" id="hoja" role="dialog" aria-modal="true" aria-labelledby="hoja-t" hidden></section>
+
+<script>
+(function () {
+'use strict';
+
+// ── Configuración (la manda el servidor) ──────────────────────────
+var D = {
+  tiposEvento: ['Culto', 'Vigilia', 'Ayuno', 'Integración', 'Serenata', 'Tarde de Alabanza', 'Noche de Alabanza', 'Alborada', 'Musical', 'REFAM', 'Otro'],
+  comites: ['Junta Local', 'Generación Vida', 'Hombres de Verdad', 'Mujeres del Bien', 'Misiones', 'Evangelismo', 'Educación Cristiana',
+    'Alabanza', 'Escuela Dominical', 'Comunicaciones', 'Intercesión', 'Recepción', 'Protemplo', 'Obra Social', 'Librería', 'Consejería',
+    'Radio', 'Proyectos', 'Adecuación', 'Limpieza', 'Mantenimiento', 'Transporte', 'Logística', 'EFOB', 'REFAM', 'Seguridad', 'Primeros Auxilios'],
+  tipos: ['Bautizado', 'Bautizado de visita', 'Simpatizante', 'Menor'],
+  congregacion: 'Alcorcón', minutosFoto: 60, maxFotos: 3
+};
+try { var conf = JSON.parse(document.getElementById('datos').textContent); if (conf && Array.isArray(conf.tipos)) D = Object.assign({}, D, conf); } catch (e) { /* página fuera de Google o vista de prueba */ }
+// Dos formas de hablar con el servidor: dentro de Apps Script (google.script.run)
+// o desde asistencia.pastorea.me (POST a ENDPOINT). Sin ninguna de las dos, o
+// con ?demo en la dirección, es la vista de prueba con datos inventados.
+var ENDPOINT = 'https://script.google.com/macros/s/AKfycbxZgkCuDBax05SKa5UoeEdEijF8IWiVHpjdH_vCZB8bHJUI79YQISnBxx21kgGxRoYdHQ/exec';
+var EN_GOOGLE = !!(window.google && window.google.script && window.google.script.run);
+var DEMO = /[?&]demo(=|&|$)/.test(location.search) || (!EN_GOOGLE && !ENDPOINT);
+
+var TIPO = {
+  'Bautizado': { cls: 't-b', una: 'Bautizado/a', plural: 'Bautizados', desc: 'De esta congregación' },
+  'Bautizado de visita': { cls: 't-v', una: 'De visita', plural: 'De visita', desc: 'Bautizado/a de otra congregación' },
+  'Simpatizante': { cls: 't-s', una: 'Simpatizante', plural: 'Simpatizantes', desc: 'No bautizado/a' },
+  'Menor': { cls: 't-m', una: 'Menor', plural: 'Menores', desc: 'Menor de edad, no bautizado/a' }
+};
+var SIN_NOMBRE = 'Sin nombre';
+var DIAS = ['domingo', 'lunes', 'martes', 'miércoles', 'jueves', 'viernes', 'sábado'];
+var MESES = ['enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio', 'julio', 'agosto', 'septiembre', 'octubre', 'noviembre', 'diciembre'];
+var STOP = { hno: 1, hna: 1, hnos: 1, hnas: 1, hermano: 1, hermana: 1, pastor: 1, pastora: 1 };
+
+var $ = function (id) { return document.getElementById(id); };
+var S = {
+  clave: leer('clave'), por: leer('por'), offset: 0,
+  personas: [], porId: {}, idx: [], familias: {},
+  eventos: [], borrador: null, ev: null, cola: { items: {}, quitar: [] },
+  enviando: false, errorSync: '', tEnvio: null, editando: null, ultimo: null, fotoLocal: [], subiendoFoto: false, vista: '',
+  pest: 'todos', fmap: {}, wPor: {}, hoja: null, fotos: {}
+};
+
+// ── Utilidades ────────────────────────────────────────────────────
+function leer(k) { try { return localStorage.getItem('cda.' + k) || ''; } catch (e) { return ''; } }
+function guardar(k, v) { try { if (v) localStorage.setItem('cda.' + k, v); else localStorage.removeItem('cda.' + k); } catch (e) { /* sin almacenamiento */ } }
+function esc(s) { return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); }
+function norm(s) { return String(s || '').normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase().replace(/[^a-z0-9 ]+/g, ' ').replace(/\s+/g, ' ').trim(); }
+function pad(n) { return String(n).padStart(2, '0'); }
+function ahora() { return Date.now() + S.offset; }
+var FMT = new Intl.DateTimeFormat('en-GB', { timeZone: 'Europe/Madrid', year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', hourCycle: 'h23' });
+function partes(ms) { var o = {}; FMT.formatToParts(new Date(ms)).forEach(function (p) { o[p.type] = p.value; }); return { iso: o.year + '-' + o.month + '-' + o.day, hm: (o.hour === '24' ? '00' : o.hour) + ':' + o.minute }; }
+function hoyIso() { return partes(ahora()).iso; }
+function horaAhora() { return partes(ahora()).hm; }
+function deIso(iso) { var m = String(iso || '').match(/^(\d{4})-(\d{2})-(\d{2})$/); return m ? { y: +m[1], m: +m[2], d: +m[3], dow: new Date(Date.UTC(+m[1], +m[2] - 1, +m[3])).getUTCDay() } : null; }
+function fechaLarga(iso) { var f = deIso(iso); return f ? DIAS[f.dow] + ' ' + f.d + ' de ' + MESES[f.m - 1] : ''; }
+function mayus(s) { s = String(s || ''); return s.charAt(0).toUpperCase() + s.slice(1); }
+function sumarDias(iso, n) { var f = deIso(iso), d = new Date(Date.UTC(f.y, f.m - 1, f.d + n)); return d.getUTCFullYear() + '-' + pad(d.getUTCMonth() + 1) + '-' + pad(d.getUTCDate()); }
+function nuevoId() { var a = new Uint8Array(10); (window.crypto || {}).getRandomValues ? window.crypto.getRandomValues(a) : a.forEach(function (_, i) { a[i] = Math.floor(Math.random() * 256); }); return Array.from(a, function (b) { return ('0' + b.toString(16)).slice(-2); }).join(''); }
+function minutos(ms) { var m = Math.max(0, Math.ceil(ms / 60000)); return m >= 60 ? Math.floor(m / 60) + ' h ' + pad(m % 60) + ' min' : m + ' min'; }
+function mostrar(id, si) { $(id).hidden = !si; }
+function error(id, msg) { var el = $(id); el.textContent = msg || ''; el.hidden = !msg; }
+function mensajeError(e) {
+  var m = String((e && e.message) || e || '').replace(/^(Error|Exception|ScriptError):\s*/i, '').replace(/^\[clave\]\s*/, '').trim();
+  if (!m || /NetworkError|network|Failed to fetch|Load failed|timed? ?out|conexi[oó]n con el servidor/i.test(m)) return 'No hay conexión con el servidor. Compruebe la conexión del móvil.';
+  return m;
+}
+// Jornada a partir de la hora de inicio (como en EDEM).
+function jornada(hm) { var h = parseInt(String(hm || '').split(':')[0], 10); return isNaN(h) ? '' : h < 13 ? 'Mañana' : h < 16 ? 'Mediodía' : h < 19 ? 'Tarde' : 'Noche'; }
+// Iniciales para la ficha: «Hna. Rut Peña de Salazar» → «RP».
+function iniciales(n) {
+  if (!n || n === SIN_NOMBRE) return '?';
+  var w = norm(n).split(' ').filter(function (t) { return t && !STOP[t] && !/^(de|del|la|las|los|y)$/.test(t); });
+  return (w.slice(0, 2).map(function (t) { return t.charAt(0); }).join('') || '?').toUpperCase();
+}
+var ICO_OK = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>';
+function esClave(e) { return /^\s*(Error:\s*)?\[clave\]/.test(String((e && e.message) || e || '')); }
+
+// ── Servidor (o simulación en la vista de prueba) ─────────────────
+function llamar(fn, arg) {
+  arg = Object.assign({ clave: S.clave, por: S.por }, arg || {});
+  if (DEMO) return PRUEBA.llamar(fn, arg);
+  if (EN_GOOGLE) {
+    return new Promise(function (res, rej) {
+      try { window.google.script.run.withSuccessHandler(res).withFailureHandler(rej)[fn](arg); } catch (e) { rej(e); }
+    });
+  }
+  return fetch(ENDPOINT, { method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify({ accion: fn, datos: arg }), redirect: 'follow', credentials: 'omit' })
+    .then(function (r) { if (!r.ok) throw new Error('El servidor no ha respondido bien (' + r.status + '). Inténtelo de nuevo en un momento.'); return r.json(); })
+    .then(function (j) { if (!j || j.ok !== true) throw new Error((j && j.error) || 'No se pudo completar la petición.'); return j.datos; });
+}
+// Fuera de Google, la lista de comités y tipos de evento se pide al servidor al abrir.
+function aplicarConfig(c) {
+  if (!c || !Array.isArray(c.tipos)) return;
+  D = Object.assign({}, D, c);
+  $('cong').textContent = D.congregacion;
+}
+
+// ── Vistas ────────────────────────────────────────────────────────
+function ir(vista) {
+  S.vista = vista;
+  ['clave', 'cargando', 'inicio', 'datos', 'registro', 'cerrar', 'fin'].forEach(function (v) { mostrar('v-' + v, v === vista); });
+  $('banda').classList.toggle('mini', vista === 'registro' || vista === 'cerrar');
+  window.scrollTo(0, 0);
+  if (vista === 'registro') { pintarRegistro(); } else if (vista === 'inicio') { pintarInicio(); }
+}
+
+// ── Inicio: clave, personas y eventos de hoy ──────────────────────
+function cargar() {
+  if (!S.clave) { ir('clave'); return; }
+  ir('cargando'); error('cargando-err', ''); mostrar('reintentar', false);
+  llamar('iniciar').then(function (r) {
+    S.offset = (r.ahora || Date.now()) - Date.now();
+    ponerPersonas(r.personas || []);
+    cargarFotos();
+    S.eventos = r.eventos || [];
+    var sigue = leer('ev');
+    var abierto = sigue && S.eventos.filter(function (e) { return e.id === sigue && e.estado === 'Abierto'; })[0];
+    if (abierto) abrirExistente(abierto.id); else ir('inicio');
+  }).catch(function (e) {
+    if (esClave(e)) { S.clave = ''; guardar('clave', ''); ir('clave'); error('clave-err', mensajeError(e)); return; }
+    error('cargando-err', mensajeError(e)); mostrar('reintentar', true);
+  });
+}
+
+// Fotos de las fichas: se piden aparte, tras la clave. Se guardan solo en memoria
+// (nada en el almacenamiento del móvil) y como blob: para no repetir el texto largo.
+function cargarFotos() {
+  llamar('fotos').then(function (r) {
+    var f = (r && r.fotos) || {}, res = {};
+    Object.keys(S.fotos).forEach(function (k) { try { if (/^blob:/.test(S.fotos[k])) URL.revokeObjectURL(S.fotos[k]); } catch (e) { /* nada */ } });
+    Object.keys(f).forEach(function (id) {
+      var d = String(f[id] || ''), m = d.match(DEMO ? /^data:(image\/(?:jpeg|png|webp|svg\+xml));base64,([A-Za-z0-9+/=]+)$/ : /^data:(image\/(?:jpeg|png|webp));base64,([A-Za-z0-9+/=]+)$/);
+      if (!m) return;
+      try {
+        var bin = atob(m[2]), u8 = new Uint8Array(bin.length);
+        for (var i = 0; i < bin.length; i++) u8[i] = bin.charCodeAt(i);
+        res[id] = URL.createObjectURL(new Blob([u8], { type: m[1] }));
+      } catch (e) { res[id] = d; }
+    });
+    S.fotos = res;
+    if (S.vista === 'registro') pintarFichas();
+  }).catch(function () { /* sin fotos: se ven las iniciales */ });
+}
+function fotoDe(id) { var u = id && S.fotos[id]; return u && /^(blob:|data:image\/)/.test(u) ? u : ''; }
+
+function ponerPersonas(lista) {
+  S.personas = lista; S.porId = {}; S.familias = {};
+  lista.forEach(function (p) {
+    S.porId[p.id] = p;
+    if (p.f) { var k = norm(p.f); (S.familias[k] = S.familias[k] || []).push(p); }
+  });
+  S.idx = lista.map(function (p) { return { p: p, w: norm(p.n).split(' ') }; });
+  S.wPor = {}; S.idx.forEach(function (x) { S.wPor[x.p.id] = x.w; });
+  var cs = {};
+  lista.forEach(function (p) { if (p.t === 'Bautizado de visita' && p.c) cs[p.c] = 1; });
+  $('congs').innerHTML = Object.keys(cs).sort().map(function (c) { return '<option value="' + esc(c) + '">'; }).join('');
+}
+
+function pintarInicio() {
+  $('hoy-t').textContent = mayus(fechaLarga(hoyIso()));
+  $('por').value = S.por;
+  var h = S.eventos.map(function (e, i) {
+    var titulo = (e.tipo || 'Evento') + (e.comite ? ' · ' + e.comite : '');
+    var meta = [e.dirige ? 'Dirige: ' + e.dirige : '', e.predica ? 'Predica: ' + e.predica : '', e.tema ? '«' + e.tema + '»' : ''].filter(Boolean).join(' · ');
+    var pils = '';
+    if (e.id) pils += e.estado === 'Abierto' ? '<span class="pil verde">Registro abierto · ' + e.total + '</span>' : '<span class="pil">Cerrado · ' + e.total + ' personas</span>';
+    else pils += '<span class="pil ' + (e.origen === 'Orden del Evento' ? 'azul' : '') + '">' + esc(e.origen === 'Horario habitual' ? 'Horario habitual' : 'Según ' + e.origen) + '</span>';
+    if (e.nota) pils += '<span class="pil ambar">' + esc(e.nota) + '</span>';
+    if (e.fecha && e.fecha !== hoyIso()) pils += '<span class="pil">' + esc(mayus(fechaLarga(e.fecha))) + '</span>';
+    return '<button class="ev' + (e.id && e.estado === 'Abierto' ? ' abierto' : '') + '" type="button" data-ev="' + i + '"><span class="ev-hora">' + esc(e.hora) + '</span>' +
+      '<span class="ev-c"><span class="ev-t">' + esc(titulo) + '</span>' + (meta ? '<span class="ev-m">' + esc(meta) + '</span>' : '') + '<span class="pils">' + pils + '</span></span></button>';
+  }).join('');
+  $('eventos').innerHTML = h || '<p class="vacio">No hay eventos previstos para hoy. Si están reunidos, pulse «Otro evento».</p>';
+}
+
+function elegirEvento(i) {
+  var e = S.eventos[i]; if (!e) return;
+  if (!porValido()) return;
+  if (e.id) { abrirExistente(e.id); return; }
+  S.borrador = Object.assign({}, e);
+  pintarDatos();
+  ir('datos');
+}
+
+function porValido() {
+  S.por = String($('por').value || '').replace(/\s+/g, ' ').trim();
+  guardar('por', S.por);
+  if (S.por.length < 3) { error('inicio-err', 'Escriba su nombre en «Quién recibe hoy».'); $('por').focus(); return false; }
+  error('inicio-err', '');
+  return true;
+}
+
+function opciones(sel, lista, valor, vacio) {
+  var l = lista.slice();
+  if (valor && l.indexOf(valor) < 0) l.unshift(valor);
+  sel.innerHTML = (vacio ? '<option value="">' + esc(vacio) + '</option>' : '') + l.map(function (x) { return '<option' + (x === valor ? ' selected' : '') + '>' + esc(x) + '</option>'; }).join('');
+}
+
+function pintarDatos() {
+  var b = S.borrador;
+  $('d-fecha').value = b.fecha; $('d-fecha').min = sumarDias(hoyIso(), -7); $('d-fecha').max = sumarDias(hoyIso(), 1);
+  $('d-hora').value = b.hora;
+  opciones($('d-tipo'), D.tiposEvento, b.tipo || 'Culto');
+  opciones($('d-comite'), D.comites, b.comite, 'Sin indicar');
+  $('d-tema').value = b.tema || ''; $('d-dirige').value = b.dirige || ''; $('d-predica').value = b.predica || ''; $('d-limpieza').value = b.limpieza || '';
+  $('datos-origen').textContent = b.origen === 'Orden del Evento' ? 'Datos tomados de la Orden del Evento de hoy.' :
+    b.origen === 'Programación' ? 'Datos tomados de la programación aprobada.' :
+    b.origen === 'Horario habitual' ? 'Horario habitual de la congregación. Indique el comité y quién dirige.' : 'Escriba los datos del evento.';
+  error('datos-err', '');
+}
+
+function abrirNuevo() {
+  if (!S.borrador) return;
+  var b = S.borrador;
+  var c = { fecha: $('d-fecha').value, hora: $('d-hora').value, tipo: $('d-tipo').value, comite: $('d-comite').value, tema: $('d-tema').value.trim(), dirige: $('d-dirige').value.trim(), predica: $('d-predica').value.trim(), limpieza: $('d-limpieza').value.trim() };
+  if (!c.fecha) { error('datos-err', 'Elija la fecha.'); return; }
+  if (!/^\d{2}:\d{2}$/.test(c.hora)) { error('datos-err', 'Escriba la hora de inicio.'); return; }
+  var cambiado = ['fecha', 'hora', 'tipo', 'comite', 'tema', 'dirige', 'predica', 'limpieza'].some(function (k) { return String(b[k] || '') !== String(c[k] || ''); });
+  c.origen = b.origen ? b.origen + (cambiado ? ' (con cambios)' : '') : 'Recepción';
+  $('abrir').disabled = true; $('abrir').textContent = 'Abriendo…'; error('datos-err', '');
+  llamar('abrirEvento', c).then(function (ev) { entrarEnEvento(ev); }).catch(function (e) {
+    if (esClave(e)) { S.clave = ''; guardar('clave', ''); ir('clave'); return; }
+    error('datos-err', mensajeError(e));
+  }).then(function () { $('abrir').disabled = false; $('abrir').textContent = 'Abrir el registro'; });
+}
+
+function abrirExistente(id) {
+  ir('cargando'); $('cargando-txt').textContent = 'Abriendo el registro…';
+  llamar('leerEvento', { id: id }).then(function (ev) {
+    entrarEnEvento(ev);
+  }).catch(function (e) { guardar('ev', ''); ir('inicio'); error('inicio-err', mensajeError(e)); });
+}
+
+function entrarEnEvento(ev) {
+  S.ev = ev; S.offset = (ev.ahora || Date.now()) - Date.now();
+  guardar('ev', ev.id);
+  try { S.cola = JSON.parse(leer('cola.' + ev.id) || 'null') || { items: {}, quitar: [] }; } catch (e) { S.cola = { items: {}, quitar: [] }; }
+  S.editando = null; S.fotoLocal = []; S.errorSync = ''; S.pest = 'todos'; cerrarHoja();
+  if (ev.estado === 'Cerrado') { pintarFin(); ir('fin'); return; }
+  ir('registro');
+  pintarDatosEvento();
+  programarEnvio(200);
+}
+
+// ── Registro ──────────────────────────────────────────────────────
+function lista() {
+  var m = {};
+  (S.ev.asistentes || []).forEach(function (a) { m[a.rid] = Object.assign({}, a, { ok: true, orden: a.m || 0 }); });
+  Object.keys(S.cola.items).forEach(function (rid) { var it = S.cola.items[rid]; m[rid] = Object.assign({}, m[rid] || {}, it, { ok: false, orden: (m[rid] && m[rid].orden) || it.ts }); });
+  S.cola.quitar.forEach(function (rid) { delete m[rid]; });
+  return Object.keys(m).map(function (k) { return m[k]; }).sort(function (a, b) { return (b.orden || 0) - (a.orden || 0); });
+}
+function registradoPid(pid, l) { l = l || lista(); return l.filter(function (a) { return a.pid === pid || a.pidTmp === pid; })[0] || null; }
+
+function pintarRegistro() {
+  if (!S.ev) return;
+  var ev = S.ev, l = lista();
+  $('r-titulo').textContent = (ev.tipo || 'Evento') + ' · ' + ev.hora;
+  var fe = deIso(ev.fecha);
+  $('r-sub').textContent = [fe ? mayus(DIAS[fe.dow].slice(0, 3)) + ' ' + fe.d + ' ' + MESES[fe.m - 1].slice(0, 3) : '', jornada(ev.hora), ev.comite].filter(Boolean).join(' · ');
+  var c = { 'Bautizado': 0, 'Bautizado de visita': 0, 'Simpatizante': 0, 'Menor': 0 }, menores = 0, nuevos = 0;
+  l.forEach(function (a) { if (c[a.t] != null) c[a.t]++; if (edadDe(a, S.porId[a.pid || a.pidTmp]) === 'Menor') menores++; if (a.nueva) nuevos++; });
+  $('contadores').innerHTML = D.tipos.map(function (t) {
+    return '<div class="cont ' + TIPO[t].cls + '"><b>' + c[t] + '</b><span>' + esc(TIPO[t].plural) + '</span></div>';
+  }).join('') + '<div class="cont total"><b>' + l.length + '</b><span>Total</span></div>';
+  $('adm').innerHTML = 'Adultos <b>' + (l.length - menores) + '</b> · Menores de edad <b>' + menores + '</b>' + (nuevos ? ' · Primera vez <b>' + nuevos + '</b>' : '');
+  pintarFichas(l);
+  pintarSync();
+  pintarFoto();
+}
+
+// ── Fichas del pase de lista ──────────────────────────────────────
+// Orden de EDEM: adultos bautizados, menores bautizados, menores sin bautizar,
+// simpatizantes y, al final, los de visita. Dentro de cada grupo, por nombre.
+var PEST = [['todos', 'Todos'], ['presentes', 'Presentes'], ['bautizados', 'Bautizados'], ['visita', 'De visita'], ['simpatizantes', 'Simpatizantes'], ['menores', 'Menores']];
+function edadDe(a, p) {
+  if ((a && a.t === 'Menor') || (!a && p && p.t === 'Menor')) return 'Menor';
+  return (a && a.e) || (p && p.e) || 'Adulto';
+}
+function grupo(f) {
+  if (f.t === 'Bautizado') return f.e === 'Menor' ? 2 : 1;
+  if (f.t === 'Menor') return 3;
+  if (f.t === 'Simpatizante') return f.e === 'Menor' ? 3 : 4;
+  return 5;
+}
+function construirFichas(l) {
+  var porPid = {}, out = [];
+  l.forEach(function (a) { var k = a.pid || a.pidTmp; if (k) porPid[k] = a; });
+  S.personas.forEach(function (p) {
+    var a = porPid[p.id] || null;
+    out.push({ k: p.id, p: p, a: a, n: p.n, t: a ? a.t : p.t, e: edadDe(a, p), w: S.wPor[p.id] || norm(p.n).split(' ') });
+  });
+  l.forEach(function (a) {                       // sin ficha en la lista: «Sin nombre» o alguien dado de baja
+    var k = a.pid || a.pidTmp;
+    if (k && S.porId[k]) return;
+    out.push({ k: 'r:' + a.rid, p: null, a: a, n: a.n, t: a.t, e: edadDe(a, null), w: norm(a.n).split(' ') });
+  });
+  out.forEach(function (f) { f.g = grupo(f); });
+  return out;
+}
+function enPest(f, pest) {
+  if (pest === 'presentes') return !!f.a;
+  if (pest === 'bautizados') return f.t === 'Bautizado';
+  if (pest === 'visita') return f.t === 'Bautizado de visita';
+  if (pest === 'simpatizantes') return f.t === 'Simpatizante' && f.e !== 'Menor';
+  if (pest === 'menores') return f.e === 'Menor';
+  return true;
+}
+function tokens(q) { return norm(q).split(' ').filter(function (t) { return t && !STOP[t]; }); }
+function coincide(f, toks) { return toks.every(function (t) { return f.w.some(function (w) { return w.indexOf(t) === 0; }); }); }
+function pintarFichas(l) {
+  if (!S.ev) return;
+  l = l || lista();
+  var todas = construirFichas(l), q = $('buscar').value, toks = tokens(q);
+  S.fmap = {}; todas.forEach(function (f) { S.fmap[f.k] = f; });
+  $('pestanas').innerHTML = PEST.map(function (x) {
+    var n = todas.filter(function (f) { return enPest(f, x[0]); }).length;
+    return '<button class="pest" type="button" data-pest="' + x[0] + '" aria-pressed="' + (S.pest === x[0]) + '">' + esc(x[1]) + ' <b>' + n + '</b></button>';
+  }).join('');
+  var vis = todas.filter(function (f) { return enPest(f, S.pest) && (!toks.length || coincide(f, toks)); });
+  if (S.pest === 'presentes') vis.sort(function (a, b) { return (b.a.orden || 0) - (a.a.orden || 0); });
+  else vis.sort(function (a, b) { return a.g - b.g || a.n.localeCompare(b.n, 'es'); });
+  var nueva = toks.length && norm(q).length >= 2;
+  $('fichas').innerHTML = vis.map(fichaHTML).join('') + (nueva ? '<button class="ficha mas" type="button" data-nuevo="1"><span class="av"><span class="ini">＋</span></span><span class="nom">Añadir «' + esc(q.trim()) + '»</span><span class="chip">Persona nueva</span></button>' : '');
+  var v = $('fichas-vacio');
+  v.hidden = !!vis.length || nueva;
+  v.textContent = S.pest === 'presentes' && !toks.length ? 'Todavía no hay nadie registrado. Toque la ficha de cada persona según llegue.' :
+    !S.personas.length && !toks.length ? 'La lista de la congregación está vacía: el pastor la rellena en la pestaña «Personas» de la hoja. Mientras, use «Añadir visitante o persona nueva».' :
+    toks.length ? 'Nadie con ese nombre en este grupo.' : 'No hay nadie en este grupo.';
+}
+function fichaHTML(f) {
+  var a = f.a, T = TIPO[f.t] || TIPO['Simpatizante'], foto = f.p ? fotoDe(f.k) : '';
+  var etq = f.t === 'Bautizado' && f.e === 'Menor' ? 'Bautizado/a · menor' : T.una;
+  var nota = a ? (a.nueva ? 'Primera vez' + (a.a ? ' · ' + a.a : '') : a.t === 'Bautizado de visita' && a.c ? [a.c, a.a].filter(Boolean).join(' · ') : a.a) : '';
+  return '<button class="ficha ' + T.cls + (a ? ' si' : '') + '" type="button" data-f="' + esc(f.k) + '" aria-label="' +
+    esc(f.n + ', ' + etq + (a ? ', presente desde las ' + a.h + '. Toque para ver o cambiar.' : '. Toque para registrar.')) + '">' +
+    '<span class="av">' + (foto ? '<img class="fp" src="' + esc(foto) + '" alt="">' : '<span class="ini" aria-hidden="true">' + esc(iniciales(f.n)) + '</span>') + (a ? '<i aria-hidden="true">' + ICO_OK + '</i>' : '') + '</span>' +
+    '<span class="nom">' + esc(f.n) + '</span><span class="chip">' + esc(etq) + '</span>' +
+    (a ? '<span class="hora"><span>' + (a.ok ? '' : '<span class="pend-d" title="Pendiente de enviar"></span>') + 'Presente</span><b>' + esc(a.h) + '</b></span>' : '') +
+    (nota ? '<span class="nota">' + esc(nota) + '</span>' : '') + '</button>';
+}
+
+// Ficha abierta (persona ya registrada): tipo, congregación, anotación o quitarla.
+function abrirHoja(rid) {
+  var a = lista().filter(function (x) { return x.rid === rid; })[0]; if (!a) return;
+  S.hoja = rid;
+  var fh = fotoDe(a.pid || a.pidTmp);
+  $('hoja').innerHTML = '<div class="hoja-cab">' + (fh ? '<img class="fp" src="' + esc(fh) + '" alt="">' : '') + '<div><h3 id="hoja-t">' + esc(a.n) + '</h3><p class="sub">Llegó a las ' + esc(a.h) +
+    (a.por ? ' · registró ' + esc(a.por) : '') + (a.nueva ? ' · primera vez' : '') + (a.ok ? '' : ' · pendiente de enviar') + '</p></div>' +
+    '<button class="cerrar-h" type="button" id="hoja-x" aria-label="Cerrar">×</button></div>' + editorHTML(a);
+  $('hoja').hidden = false; $('velo').hidden = false; document.body.classList.add('con-hoja');
+  setTimeout(function () { var x = $('hoja-x'); if (x) x.focus({ preventScroll: true }); }, 30);
+}
+function cerrarHoja() {
+  if (!S.hoja && $('hoja').hidden) return;
+  S.hoja = null; $('hoja').hidden = true; $('velo').hidden = true; $('hoja').innerHTML = ''; document.body.classList.remove('con-hoja');
+}
+
+function editorHTML(a) {
+  return '<div class="as-ed">' +
+    '<div class="campo"><label for="ed-tipo">Tipo</label><select id="ed-tipo">' + D.tipos.map(function (t) { return '<option value="' + esc(t) + '"' + (t === a.t ? ' selected' : '') + '>' + esc(TIPO[t].una + ' · ' + TIPO[t].desc) + '</option>'; }).join('') + '</select></div>' +
+    '<div class="campo" id="ed-cong-c"' + (a.t === 'Bautizado de visita' ? '' : ' hidden') + '><label for="ed-cong">Congregación</label><input id="ed-cong" type="text" maxlength="80" list="congs" value="' + esc(a.c) + '"></div>' +
+    '<div class="campo"><label for="ed-anot">Anotación</label><textarea id="ed-anot" maxlength="400" placeholder="Ej. amigo de la hna. Rut">' + esc(a.a) + '</textarea></div>' +
+    '<div class="acc"><button class="btn btn-pri" type="button" data-ed="guardar" data-rid="' + esc(a.rid) + '">Guardar</button>' +
+    '<button class="btn" type="button" data-ed="quitar" data-rid="' + esc(a.rid) + '" style="color:var(--mal);border-color:var(--mal)">Quitar del registro</button></div></div>';
+}
+
+function pintarSync() {
+  var el = $('sync'), pend = Object.keys(S.cola.items).length + S.cola.quitar.length;
+  el.className = 'sync' + (S.errorSync ? ' mal' : pend ? ' pend' : '');
+  el.textContent = S.errorSync ? (navigator.onLine === false ? 'Sin conexión · ' : 'Sin guardar · ') + pend : S.enviando ? 'Guardando…' : pend ? 'Pendiente · ' + pend : 'Guardado';
+  el.title = S.errorSync || '';
+}
+
+// Búsqueda por nombre
+function buscar(q) {
+  var toks = norm(q).split(' ').filter(function (t) { return t && !STOP[t]; });
+  if (!toks.length) return [];
+  return S.idx.filter(function (x) { return toks.every(function (t) { return x.w.some(function (w) { return w.indexOf(t) === 0; }); }); })
+    .map(function (x) { return { p: x.p, s: x.w[0].indexOf(toks[0]) === 0 ? 0 : 1 }; })
+    .sort(function (a, b) { return a.s - b.s || a.p.n.localeCompare(b.p.n, 'es'); })
+    .slice(0, 8).map(function (x) { return x.p; });
+}
+
+function registrarPersona(p) {
+  if (registradoPid(p.id)) { toast(p.n + ' ya está registrado.'); return; }
+  var it = { rid: nuevoId(), pid: p.id, n: p.n, t: p.t, e: edadDe(null, p), c: p.c || '', a: '', h: horaAhora(), nueva: false, primera: false, ts: ahora(), v: 1 };
+  var buscaba = !!$('buscar').value;
+  $('buscar').value = '';
+  anadirACola(it);
+  toast('✓ ' + p.n + ' · ' + TIPO[p.t].una + ' · ' + it.h, it.rid);
+  pintarFamilia(p);
+  if (buscaba) $('buscador').scrollIntoView({ block: 'start' });
+}
+
+function pintarFamilia(p) {
+  var caja = $('familia');
+  if (!p || !p.f) { caja.hidden = true; return; }
+  var l = lista();
+  var otros = (S.familias[norm(p.f)] || []).filter(function (x) { return x.id !== p.id && !registradoPid(x.id, l); });
+  if (!otros.length) { caja.hidden = true; return; }
+  caja.innerHTML = '<p>¿Viene con su familia? (' + esc(p.f) + ')</p><div class="fam-ops">' +
+    otros.map(function (x) { return '<button type="button" data-fam="' + esc(x.id) + '">＋ ' + esc(x.n.split(' ')[0]) + '</button>'; }).join('') +
+    (otros.length > 1 ? '<button type="button" class="todos" data-fam="todos" data-familia="' + esc(p.id) + '">＋ Todos (' + otros.length + ')</button>' : '') +
+    '<button type="button" data-fam="no">No</button></div>';
+  caja.hidden = false;
+  S.familiaDe = p;
+}
+
+function anadirACola(it) {
+  S.cola.items[it.rid] = it;
+  S.ultimo = it.rid;
+  guardarCola();
+  pintarRegistro();
+  programarEnvio();
+}
+function guardarCola() { if (S.ev) guardar('cola.' + S.ev.id, (Object.keys(S.cola.items).length || S.cola.quitar.length) ? JSON.stringify(S.cola) : ''); }
+
+function quitarRegistro(rid) {
+  if (S.cola.items[rid]) {
+    var enServidor = (S.ev.asistentes || []).some(function (a) { return a.rid === rid; });
+    delete S.cola.items[rid];
+    if (enServidor) S.cola.quitar.push(rid);
+  } else {
+    S.cola.quitar.push(rid);
+  }
+  S.editando = null;
+  cerrarHoja();
+  guardarCola(); pintarRegistro(); programarEnvio();
+}
+
+function guardarEdicion(rid) {
+  var a = lista().filter(function (x) { return x.rid === rid; })[0]; if (!a) return;
+  var t = $('ed-tipo').value, it = Object.assign({}, S.cola.items[rid] || { rid: rid, pid: a.pid, n: a.n, h: a.h, nueva: a.nueva, primera: a.nueva, ts: a.orden }, {
+    t: t, c: t === 'Bautizado de visita' ? $('ed-cong').value.trim() : (t === 'Bautizado' ? D.congregacion : ''), a: $('ed-anot').value.trim()
+  });
+  var p = S.porId[a.pid || a.pidTmp];
+  it.e = t === 'Menor' ? 'Menor' : (p && p.e) || (a.t === 'Menor' ? 'Adulto' : a.e) || 'Adulto';
+  it.v = (it.v || 0) + 1;
+  S.editando = null;
+  cerrarHoja();
+  anadirACola(it);
+  toast('Cambios guardados para ' + a.n + '.');
+}
+
+// Persona nueva
+function abrirNuevo2(texto) {
+  $('nv-nombre').value = String(texto || '').trim().replace(/\s+/g, ' ').replace(/(^|\s)(\S)/g, function (m, s, c) { return s + c.toUpperCase(); });
+  $('nv-sin').checked = false; $('nv-nombre').disabled = false;
+  document.querySelectorAll('input[name="nv-tipo"]').forEach(function (r) { r.checked = r.value === 'Simpatizante'; });
+  $('nv-cong').value = ''; $('nv-cong-c').hidden = true; $('nv-menor').checked = false; $('nv-menor-c').hidden = true;
+  $('nv-anot').value = ''; $('nv-primera').checked = true; error('nv-err', '');
+  $('nuevo').hidden = false; $('familia').hidden = true;
+  $('nuevo').scrollIntoView({ block: 'start', behavior: 'smooth' });
+  setTimeout(function () { ($('nv-nombre').value ? $('nv-anot') : $('nv-nombre')).focus({ preventScroll: true }); }, 250);
+}
+function registrarNuevo() {
+  var sin = $('nv-sin').checked, n = sin ? SIN_NOMBRE : $('nv-nombre').value.replace(/\s+/g, ' ').trim();
+  var r = document.querySelector('input[name="nv-tipo"]:checked'), t = r ? r.value : '';
+  if (!sin && n.length < 2) { error('nv-err', 'Escriba el nombre o marque «No sabemos su nombre».'); return; }
+  if (!t) { error('nv-err', 'Elija quién es.'); return; }
+  var c = t === 'Bautizado de visita' ? $('nv-cong').value.trim() : (t === 'Bautizado' ? D.congregacion : '');
+  if (t === 'Bautizado de visita' && !c) { error('nv-err', 'Escriba de qué congregación viene.'); return; }
+  if (!sin) {
+    var igual = S.personas.filter(function (p) { return norm(p.n) === norm(n); })[0];
+    if (igual) { $('nuevo').hidden = true; registrarPersona(igual); return; }
+  }
+  var e = t === 'Menor' || ($('nv-menor').checked && (t === 'Bautizado' || t === 'Bautizado de visita')) ? 'Menor' : 'Adulto';
+  var it = { rid: nuevoId(), pid: '', n: n, t: t, e: e, c: c, a: $('nv-anot').value.trim(), h: horaAhora(), nueva: true, primera: $('nv-primera').checked, ts: ahora(), v: 1 };
+  if (!sin) {                                   // ya tiene ficha en este móvil hasta que el servidor le dé su ID
+    var p = { id: 'tmp' + it.rid, n: n, t: t, e: e, c: c, f: '', a: it.a };
+    S.personas.push(p); S.porId[p.id] = p; S.idx.push({ p: p, w: norm(n).split(' ') }); S.wPor[p.id] = norm(n).split(' '); it.pidTmp = p.id;
+  }
+  $('nuevo').hidden = true; $('buscar').value = '';
+  anadirACola(it);
+  toast('✓ ' + n + ' · ' + TIPO[t].una + (it.primera ? ' · primera vez' : ''), it.rid);
+}
+
+// Envío a la hoja: en segundo plano, con reintento; nada se pierde si se va la conexión.
+function programarEnvio(ms) { clearTimeout(S.tEnvio); S.tEnvio = setTimeout(enviar, ms == null ? 600 : ms); }
+function enviar() {
+  if (S.enviando || !S.ev) return;
+  var ids = Object.keys(S.cola.items), quitar = S.cola.quitar.slice();
+  if (!ids.length && !quitar.length) { pintarSync(); return; }
+  var enviados = ids.map(function (k) { return Object.assign({}, S.cola.items[k]); });
+  S.enviando = true; pintarSync();
+  llamar('registrar', {
+    id: S.ev.id, quitar: quitar,
+    items: enviados.map(function (i) { return { rid: i.rid, pid: i.pid, n: i.n, t: i.t, e: i.e, c: i.c, a: i.a, h: i.h, nueva: i.nueva, primera: i.primera }; })
+  }).then(function (r) {
+    S.ev = Object.assign(r.evento, {});
+    S.offset = (r.evento.ahora || Date.now()) - Date.now();
+    enviados.forEach(function (e) { var act = S.cola.items[e.rid]; if (act && act.v === e.v) delete S.cola.items[e.rid]; });
+    S.cola.quitar = S.cola.quitar.filter(function (q) { return quitar.indexOf(q) < 0; });
+    Object.keys(r.pids || {}).forEach(function (rid) {
+      var e = enviados.filter(function (x) { return x.rid === rid; })[0], p = e && S.porId[e.pidTmp];
+      if (p) { var w = S.wPor[p.id]; delete S.porId[p.id]; delete S.wPor[p.id]; p.id = r.pids[rid]; S.porId[p.id] = p; S.wPor[p.id] = w; }
+    });
+    (r.duplicados || []).forEach(function (rid) { var e = enviados.filter(function (x) { return x.rid === rid; })[0]; if (e) toast(e.n + ' ya lo había registrado otra persona de recepción.'); });
+    S.errorSync = '';
+  }).catch(function (e) {
+    if (esClave(e)) { S.clave = ''; guardar('clave', ''); ir('clave'); error('clave-err', mensajeError(e)); return; }
+    S.errorSync = mensajeError(e);
+    clearTimeout(S.tEnvio); S.tEnvio = setTimeout(enviar, 8000);
+  }).then(function () {
+    S.enviando = false; guardarCola();
+    if (S.vista === 'registro') pintarRegistro();
+    if (!S.errorSync && (Object.keys(S.cola.items).length || S.cola.quitar.length)) programarEnvio(300);
+  });
+}
+
+// Lo que registran otros móviles en el mismo evento.
+function refrescar() {
+  if (S.vista !== 'registro' || !S.ev || S.enviando || document.visibilityState === 'hidden') return;
+  if (Object.keys(S.cola.items).length || S.cola.quitar.length) { programarEnvio(0); return; }
+  llamar('leerEvento', { id: S.ev.id }).then(function (ev) {
+    if (S.vista !== 'registro' || !S.ev || ev.id !== S.ev.id || S.enviando) return;
+    S.ev = ev; S.offset = (ev.ahora || Date.now()) - Date.now();
+    var editando = document.activeElement && /^(ed-|nv-|e-|buscar)/.test(document.activeElement.id || '');
+    if (!editando) pintarRegistro(); else pintarFoto();
+  }).catch(function () { /* se intentará en la próxima vuelta */ });
+}
+
+// ── Foto del evento ───────────────────────────────────────────────
+var ICO_CAM = '<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 8h3l2-3h6l2 3h3v11H4z"/><circle cx="12" cy="13" r="3.5"/></svg>';
+function pintarFoto() {
+  if (!S.ev) return;
+  var ev = S.ev, caja = $('foto'), t = ahora(), falta = ev.fotoDesdeMs - t, n = (ev.fotos || []).length;
+  var inicioTxt = ev.horaReal ? 'Empezó a las ' + ev.horaReal : 'Inicio previsto a las ' + ev.hora;
+  var hechas = (ev.fotos || []).map(function (f) { return f.hora + ' (' + f.min + ' min, ' + f.n + ' registrados)'; }).join(' · ');
+  var miniaturas = S.fotoLocal.length ? '<div class="fotos-hechas">' + S.fotoLocal.map(function (u) { return '<img src="' + u + '" alt="Foto enviada">'; }).join('') + '</div>' : '';
+  var h, cls = 'foto';
+  if (S.subiendoFoto) {
+    h = '<div class="foto-f"><span class="foto-ico">' + ICO_CAM + '</span><span class="foto-c"><b>Enviando la foto…</b><span>No cierre esta pantalla.</span></span></div>';
+  } else if (falta > 0) {
+    cls += ' cerrada';
+    var total = ev.fotoDesdeMs - ev.inicioMs, hecho = Math.min(1, Math.max(0, 1 - falta / total));
+    var desde = partes(ev.fotoDesdeMs).hm;
+    h = '<div class="foto-f"><span class="foto-ico">' + ICO_CAM + '</span><span class="foto-c"><b>Foto del evento a las ' + desde + '</b>' +
+      '<span>' + (t < ev.inicioMs ? 'Cuando el evento lleve ' + D.minutosFoto + ' minutos, para que salga toda la congregación. ' + inicioTxt + '.' : 'Faltan ' + minutos(falta) + '. ' + inicioTxt + '.') + '</span></span></div>' +
+      '<div class="progreso" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="' + Math.round(hecho * 100) + '" aria-label="Tiempo hasta la foto"><i style="width:' + Math.round(hecho * 100) + '%"></i></div>' +
+      (!ev.horaReal ? '<button class="btn btn-ancho" type="button" id="empezo">El evento ha empezado ahora</button>' : '');
+  } else if (n >= D.maxFotos) {
+    h = '<div class="foto-f"><span class="foto-ico">' + ICO_CAM + '</span><span class="foto-c"><b>Fotos hechas</b><span>' + esc(hechas) + '</span></span></div>' + miniaturas;
+  } else {
+    cls += n ? '' : ' lista';
+    h = '<div class="foto-f"><span class="foto-ico">' + ICO_CAM + '</span><span class="foto-c"><b>' + (n ? 'Foto enviada' : 'Ya puede hacer la foto') + '</b><span>' +
+      (n ? esc(hechas) : 'El evento lleva ' + minutos(t - ev.inicioMs) + '. Haga una foto donde se vea toda la congregación.') + '</span></span></div>' + miniaturas +
+      '<button class="btn ' + (n ? '' : 'btn-pri ') + 'btn-ancho" type="button" id="hacer-foto">' + ICO_CAM + (n ? ' Hacer otra foto' : ' Hacer la foto') + '</button>';
+  }
+  if (S.errorFoto) h += '<p class="err" role="alert">' + esc(S.errorFoto) + '</p>';
+  caja.className = cls; caja.innerHTML = h;
+}
+
+function reducir(file) {
+  return new Promise(function (res, rej) {
+    var url = URL.createObjectURL(file), img = new Image();
+    img.onload = function () {
+      var k = Math.min(1, 2200 / Math.max(img.naturalWidth, img.naturalHeight));
+      var c = document.createElement('canvas'); c.width = Math.round(img.naturalWidth * k); c.height = Math.round(img.naturalHeight * k);
+      var x = c.getContext('2d'); x.fillStyle = '#fff'; x.fillRect(0, 0, c.width, c.height); x.drawImage(img, 0, 0, c.width, c.height);
+      c.toBlob(function (b) { URL.revokeObjectURL(url); b ? res(b) : rej(new Error('No se pudo preparar la foto. Hágala de nuevo.')); }, 'image/jpeg', 0.84);
+    };
+    img.onerror = function () { URL.revokeObjectURL(url); rej(new Error('No se pudo leer la foto. Hágala de nuevo.')); };
+    img.src = url;
+  });
+}
+function aBase64(blob) { return new Promise(function (res, rej) { var r = new FileReader(); r.onload = function () { res(String(r.result).split(',')[1] || ''); }; r.onerror = function () { rej(new Error('No se pudo leer la foto.')); }; r.readAsDataURL(blob); }); }
+
+function subirFoto(file) {
+  if (!S.ev || S.subiendoFoto) return;
+  S.subiendoFoto = true; S.errorFoto = ''; pintarFoto();
+  var vista;
+  reducir(file).then(function (b) { vista = URL.createObjectURL(b); return aBase64(b); })
+    .then(function (datos) { return llamar('subirFoto', { id: S.ev.id, datos: datos }); })
+    .then(function (ev) { S.ev = ev; if (vista) S.fotoLocal.push(vista); toast('Foto enviada.'); })
+    .catch(function (e) { if (vista) URL.revokeObjectURL(vista); S.errorFoto = mensajeError(e); })
+    .then(function () { S.subiendoFoto = false; pintarRegistro(); });
+}
+
+// ── Datos del evento (durante el registro) ────────────────────────
+function pintarDatosEvento() {
+  var ev = S.ev;
+  opciones($('e-tipo'), D.tiposEvento, ev.tipo);
+  opciones($('e-comite'), D.comites, ev.comite, 'Sin indicar');
+  $('e-dirige').value = ev.dirige; $('e-predica').value = ev.predica; $('e-limpieza').value = ev.limpieza || ''; $('e-tema').value = ev.tema; $('e-real').value = ev.horaReal;
+  $('e-recepcion').textContent = ev.recepcion ? 'En recepción: ' + ev.recepcion : '';
+  error('e-err', '');
+}
+function guardarDatosEvento(campos, boton) {
+  if (boton) { boton.disabled = true; }
+  return llamar('actualizarEvento', { id: S.ev.id, campos: campos }).then(function (ev) {
+    S.ev = ev; pintarDatosEvento(); pintarRegistro(); toast('Datos del evento guardados.');
+  }).catch(function (e) { error('e-err', mensajeError(e)); S.errorFoto = mensajeError(e); pintarFoto(); })
+    .then(function () { if (boton) boton.disabled = false; });
+}
+
+// ── Cerrar ────────────────────────────────────────────────────────
+function resumenHTML(l, ev) {
+  var c = { 'Bautizado': 0, 'Bautizado de visita': 0, 'Simpatizante': 0, 'Menor': 0 }, nuevos = 0, menores = 0;
+  l.forEach(function (a) { c[a.t]++; if (a.nueva) nuevos++; if (edadDe(a, S.porId[a.pid || a.pidTmp]) === 'Menor') menores++; });
+  var filas = D.tipos.map(function (t) { return [TIPO[t].plural, c[t]]; });
+  filas.push(['Total', l.length]);
+  filas.push(['Adultos · menores de edad', (l.length - menores) + ' · ' + menores]);
+  if (nuevos) filas.push(['Primera vez', nuevos]);
+  filas.push(['Foto', ev.fotos && ev.fotos.length ? ev.fotos.map(function (f) { return f.hora; }).join(', ') : 'Sin foto']);
+  return filas.map(function (f) { return '<dt>' + esc(f[0]) + '</dt><dd>' + esc(f[1]) + '</dd>'; }).join('');
+}
+function pintarCerrar() {
+  var ev = S.ev, l = lista();
+  $('c-titulo').textContent = (ev.tipo || 'Evento') + ' · ' + mayus(fechaLarga(ev.fecha)) + ', ' + ev.hora;
+  $('c-resumen').innerHTML = resumenHTML(l, ev);
+  var sinFoto = !(ev.fotos && ev.fotos.length);
+  var c = $('c-sinfoto');
+  c.hidden = !sinFoto;
+  if (sinFoto) c.textContent = ahora() >= ev.fotoDesdeMs ? 'Todavía no hay foto del evento. Si aún están reunidos, vuelva y hágala antes de cerrar.' : 'La foto aún no se puede hacer: se abre a las ' + partes(ev.fotoDesdeMs).hm + '. Si el evento sigue, mejor cerrar más tarde.';
+  $('c-obs').value = ev.observaciones || '';
+  error('c-err', '');
+}
+function cerrar() {
+  var b = $('c-ok');
+  b.disabled = true; b.textContent = 'Cerrando…'; error('c-err', '');
+  var pendiente = function () { return Object.keys(S.cola.items).length || S.cola.quitar.length; };
+  var esperar = function (n) {
+    if (!pendiente()) return Promise.resolve();
+    if (n > 20) return Promise.reject(new Error('Hay registros sin enviar. Compruebe la conexión y vuelva a intentarlo.'));
+    if (!S.enviando) enviar();
+    return new Promise(function (r) { setTimeout(r, 700); }).then(function () { if (S.errorSync) throw new Error(S.errorSync); return esperar(n + 1); });
+  };
+  esperar(0).then(function () { return llamar('cerrarEvento', { id: S.ev.id, observaciones: $('c-obs').value }); })
+    .then(function (ev) { S.ev = ev; guardar('ev', ''); actualizarEnLista(ev); pintarFin(); ir('fin'); })
+    .catch(function (e) { error('c-err', mensajeError(e)); })
+    .then(function () { b.disabled = false; b.textContent = 'Cerrar el registro'; });
+}
+function pintarFin() {
+  var ev = S.ev;
+  $('f-titulo').textContent = (ev.tipo || 'Evento') + ' · ' + mayus(fechaLarga(ev.fecha)) + ', ' + ev.hora;
+  $('f-resumen').innerHTML = resumenHTML(ev.asistentes || [], ev);
+}
+function actualizarEnLista(ev) {
+  var i = S.eventos.findIndex(function (e) { return e.id === ev.id || (!e.id && e.fecha === ev.fecha && e.hora === ev.hora); });
+  var r = { id: ev.id, fecha: ev.fecha, hora: ev.hora, tipo: ev.tipo, comite: ev.comite, tema: ev.tema, dirige: ev.dirige, predica: ev.predica, estado: ev.estado, total: (ev.asistentes || []).length, origen: ev.origen };
+  if (i >= 0) S.eventos[i] = r; else S.eventos.push(r);
+  S.eventos.sort(function (a, b) { return (a.fecha + a.hora).localeCompare(b.fecha + b.hora); });
+}
+
+// ── Aviso breve ───────────────────────────────────────────────────
+var tToast = null;
+function toast(txt, deshacer) {
+  $('toast-t').textContent = txt; $('toast').hidden = false;
+  $('toast-b').hidden = !deshacer; $('toast-b').setAttribute('data-rid', deshacer || '');
+  clearTimeout(tToast); tToast = setTimeout(function () { $('toast').hidden = true; }, deshacer ? 6000 : 3000);
+}
+
+// ── Eventos de la página ──────────────────────────────────────────
+$('cong').textContent = D.congregacion;
+$('nv-tipos').insertAdjacentHTML('beforeend', D.tipos.map(function (t) {
+  return '<label class="tipo ' + TIPO[t].cls + '"><input type="radio" name="nv-tipo" value="' + esc(t) + '"><span><b>' + esc(TIPO[t].una) + '</b><small>' + esc(TIPO[t].desc) + '</small></span></label>';
+}).join(''));
+if (DEMO) $('aviso-demo').hidden = false;
+
+$('entrar').addEventListener('click', function () {
+  var c = $('clave').value.trim();
+  if (c.length < 4) { error('clave-err', 'Escriba la clave de recepción.'); return; }
+  S.clave = c; guardar('clave', c); error('clave-err', ''); cargar();
+});
+$('clave').addEventListener('keydown', function (e) { if (e.key === 'Enter') $('entrar').click(); });
+$('reintentar').addEventListener('click', cargar);
+$('recargar').addEventListener('click', function () { guardar('ev', ''); cargar(); });
+$('salir').addEventListener('click', function () { S.clave = ''; guardar('clave', ''); guardar('ev', ''); $('clave').value = ''; ir('clave'); });
+$('por').addEventListener('change', function () { S.por = this.value.trim(); guardar('por', S.por); });
+$('otro').addEventListener('click', function () {
+  if (!porValido()) return;
+  var hm = horaAhora().split(':');
+  S.borrador = { fecha: hoyIso(), hora: pad(hm[0]) + ':' + pad(Math.floor(+hm[1] / 15) * 15), tipo: 'Culto', comite: '', tema: '', dirige: '', predica: '', origen: '' };
+  pintarDatos(); ir('datos');
+});
+$('abrir').addEventListener('click', abrirNuevo);
+
+$('buscar').addEventListener('input', function () { $('nuevo').hidden = true; if (this.value.trim() && S.pest !== 'todos') S.pest = 'todos'; pintarFichas(); });
+$('add-vis').addEventListener('click', function () { abrirNuevo2($('buscar').value); });
+$('ir-buscar').addEventListener('click', function () { window.scrollTo({ top: 0, behavior: 'smooth' }); setTimeout(function () { $('buscar').focus({ preventScroll: true }); }, 250); });
+$('velo').addEventListener('click', cerrarHoja);
+document.addEventListener('keydown', function (e) { if (e.key === 'Escape' && S.hoja) cerrarHoja(); });
+$('buscar').addEventListener('keydown', function (e) {
+  if (e.key !== 'Enter') return;
+  e.preventDefault();
+  var res = buscar(this.value).filter(function (p) { return !registradoPid(p.id); });
+  if (res.length === 1) registrarPersona(res[0]);
+});
+$('nv-sin').addEventListener('change', function () { $('nv-nombre').disabled = this.checked; });
+$('nv-tipos').addEventListener('change', function () {
+  var r = document.querySelector('input[name="nv-tipo"]:checked');
+  $('nv-cong-c').hidden = !(r && r.value === 'Bautizado de visita');
+  $('nv-menor-c').hidden = !(r && (r.value === 'Bautizado' || r.value === 'Bautizado de visita'));
+  if (r && r.value === 'Bautizado') $('nv-primera').checked = false;
+});
+$('nv-ok').addEventListener('click', registrarNuevo);
+$('nv-cancelar').addEventListener('click', function () { $('nuevo').hidden = true; $('buscar').focus(); });
+$('e-guardar').addEventListener('click', function () {
+  guardarDatosEvento({ tipo: $('e-tipo').value, comite: $('e-comite').value, dirige: $('e-dirige').value.trim(), predica: $('e-predica').value.trim(), limpieza: $('e-limpieza').value.trim(), tema: $('e-tema').value.trim(), horaReal: $('e-real').value }, this);
+});
+$('ir-cerrar').addEventListener('click', function () { pintarCerrar(); ir('cerrar'); });
+$('c-ok').addEventListener('click', cerrar);
+$('reabrir').addEventListener('click', function () {
+  var b = this; b.disabled = true;
+  llamar('actualizarEvento', { id: S.ev.id, campos: { estado: 'Abierto' } }).then(function (ev) { actualizarEnLista(ev); entrarEnEvento(ev); })
+    .catch(function (e) { toast(mensajeError(e)); }).then(function () { b.disabled = false; });
+});
+$('toast-b').addEventListener('click', function () { var rid = this.getAttribute('data-rid'); if (rid) quitarRegistro(rid); $('toast').hidden = true; });
+$('cam').addEventListener('change', function () { var f = this.files && this.files[0]; this.value = ''; if (f) subirFoto(f); });
+
+document.addEventListener('click', function (ev) {
+  var t = ev.target.closest('button'); if (!t) return;
+  if (t.hasAttribute('data-ir')) {
+    var a = t.getAttribute('data-ir');
+    if (a === 'inicio' && S.ev && (Object.keys(S.cola.items).length || S.cola.quitar.length)) { toast('Espere un momento: hay registros sin guardar todavía.'); programarEnvio(0); return; }
+    if (a === 'inicio') { if (S.ev && S.ev.estado === 'Abierto') actualizarEnLista(Object.assign({}, S.ev, { asistentes: lista() })); guardar('ev', ''); S.ev = null; ir('inicio'); }
+    else if (a === 'registro') ir('registro');
+    return;
+  }
+  if (t.hasAttribute('data-ev')) { elegirEvento(+t.getAttribute('data-ev')); return; }
+  if (t.hasAttribute('data-f')) {
+    var f = S.fmap[t.getAttribute('data-f')]; if (!f) return;
+    if (f.a) abrirHoja(f.a.rid); else if (f.p) registrarPersona(f.p);
+    return;
+  }
+  if (t.hasAttribute('data-pest')) { S.pest = t.getAttribute('data-pest'); pintarFichas(); return; }
+  if (t.id === 'hoja-x') { cerrarHoja(); return; }
+  if (t.hasAttribute('data-nuevo')) { abrirNuevo2($('buscar').value); return; }
+  if (t.hasAttribute('data-fam')) {
+    var f = t.getAttribute('data-fam'), base = S.familiaDe;
+    if (f === 'no') { $('familia').hidden = true; $('buscar').focus(); return; }
+    var l = lista();
+    var quienes = f === 'todos' ? (S.familias[norm(base.f)] || []).filter(function (x) { return x.id !== base.id && !registradoPid(x.id, l); }) : [S.porId[f]].filter(Boolean);
+    quienes.forEach(function (x) { anadirACola({ rid: nuevoId(), pid: x.id, n: x.n, t: x.t, e: edadDe(null, x), c: x.c || '', a: '', h: horaAhora(), nueva: false, primera: false, ts: ahora(), v: 1 }); });
+    if (quienes.length) toast('✓ ' + quienes.map(function (x) { return x.n.split(' ')[0]; }).join(', ') + ' registrados.');
+    pintarFamilia(base);
+    return;
+  }
+  if (t.hasAttribute('data-ed')) {
+    var accion = t.getAttribute('data-ed'), r = t.getAttribute('data-rid');
+    if (accion === 'guardar') guardarEdicion(r); else if (accion === 'quitar') quitarRegistro(r);
+    return;
+  }
+  if (t.id === 'hacer-foto') { $('cam').click(); return; }
+  if (t.id === 'empezo') { guardarDatosEvento({ horaReal: horaAhora() }, t); return; }
+});
+document.addEventListener('change', function (ev) {
+  if (ev.target.id === 'ed-tipo') { var c = $('ed-cong-c'); if (c) c.hidden = ev.target.value !== 'Bautizado de visita'; }
+});
+window.addEventListener('online', function () { if (S.ev) programarEnvio(0); });
+document.addEventListener('visibilitychange', function () { if (document.visibilityState === 'visible') refrescar(); });
+setInterval(refrescar, 30000);
+setInterval(function () { if (S.vista === 'registro' && !S.subiendoFoto) pintarFoto(); }, 20000);
+window.addEventListener('beforeunload', function (e) { if (S.ev && (Object.keys(S.cola.items).length || S.cola.quitar.length)) { e.preventDefault(); e.returnValue = ''; } });
+
+// ── Vista de prueba (sin servidor) ────────────────────────────────
+var PRUEBA = (function () {
+  var NOMBRES = [
+    ['Ana Beltrán', 'Bautizado', 'Familia Beltrán'], ['Pedro Beltrán', 'Bautizado', 'Familia Beltrán'], ['Lucas Beltrán', 'Menor', 'Familia Beltrán'], ['Sara Beltrán', 'Bautizado', 'Familia Beltrán', '', 'Menor'],
+    ['Andrés Salazar', 'Bautizado', 'Familia Salazar'], ['Rut Peña de Salazar', 'Bautizado', 'Familia Salazar'], ['Mateo Salazar', 'Simpatizante', 'Familia Salazar'],
+    ['Carmen Soto', 'Bautizado', ''], ['Daniel Rojas', 'Bautizado', ''], ['Elena Prieto', 'Bautizado', ''], ['Felipe Arango', 'Bautizado', 'Familia Arango'], ['Gloria Arango', 'Bautizado', 'Familia Arango'],
+    ['Iván Correa', 'Bautizado', ''], ['Jorge Pineda', 'Bautizado', ''], ['Lucía Herrera', 'Bautizado', ''], ['Marta León', 'Bautizado', ''], ['Noelia Vargas', 'Bautizado', ''],
+    ['Paola Méndez', 'Bautizado', ''], ['Rebeca Castillo', 'Bautizado', ''], ['Samuel Ortiz', 'Bautizado', ''], ['Tomás Vega', 'Bautizado', ''], ['Valeria Gómez', 'Simpatizante', ''],
+    ['Óscar Ramírez', 'Simpatizante', ''], ['Julián Torres', 'Bautizado de visita', '', 'Fuenlabrada'], ['Diana García', 'Bautizado', ''],
+    ['Abigail Ruiz', 'Bautizado', ''], ['Benjamín Ortega', 'Bautizado', ''], ['Claudia Navarro', 'Bautizado', ''], ['David Molina', 'Bautizado', 'Familia Molina'],
+    ['Eva Lozano de Molina', 'Bautizado', 'Familia Molina'], ['Hugo Molina', 'Bautizado', 'Familia Molina', '', 'Menor'], ['Noa Molina', 'Menor', 'Familia Molina'],
+    ['Inés Cabrera', 'Simpatizante', ''], ['Raúl Medina', 'Simpatizante', ''], ['Teresa Campos', 'Bautizado', '']
+  ];
+  var personas = NOMBRES.map(function (x, i) { return { id: 'P' + pad(i + 1).padStart(4, '0'), n: x[0], t: x[1], e: x[1] === 'Menor' ? 'Menor' : x[4] || 'Adulto', c: x[3] || (x[1] === 'Bautizado' ? 'Alcorcón' : ''), f: x[2], a: '' }; });
+  var eventos = {};
+  function inicioPrueba() { var d = new Date(Date.now() - 40 * 60000); d.setMinutes(Math.floor(d.getMinutes() / 5) * 5, 0, 0); return d.getTime(); }
+  function completo(ev) {
+    var e = JSON.parse(JSON.stringify(ev));
+    e.total = e.asistentes.length; e.ahora = Date.now();
+    var ini = e.horaReal ? (function () { var p = e.horaReal.split(':'), d = new Date(e.inicioMs); d.setHours(+p[0], +p[1], 0, 0); return d.getTime(); })() : e.inicioMs0;
+    e.inicioMs = ini; e.fotoDesdeMs = ini + D.minutosFoto * 60000;
+    return e;
+  }
+  function propuestas() {
+    var ini = inicioPrueba(), hm = partes(ini).hm, hoy = hoyIso();
+    var abiertos = Object.keys(eventos).map(function (k) { var e = eventos[k]; return { id: e.id, fecha: e.fecha, hora: e.hora, tipo: e.tipo, comite: e.comite, tema: e.tema, dirige: e.dirige, predica: e.predica, estado: e.estado, total: e.asistentes.length, origen: e.origen }; });
+    var ya = {}; abiertos.forEach(function (e) { ya[e.hora] = 1; });
+    var p = [{ fecha: hoy, hora: hm, tipo: 'Culto', comite: 'Generación Vida', tema: 'Firmes en la fe', dirige: 'Hno. Samuel Ortiz', predica: 'Hno. Daniel Rojas', limpieza: 'Familia Arango', origen: 'Orden del Evento' }];
+    var luego = partes(ini + 150 * 60000);
+    if (luego.iso === hoy) p.push({ fecha: hoy, hora: luego.hm, tipo: 'Vigilia', comite: 'Intercesión', tema: '', dirige: '', predica: '', origen: 'Programación' });
+    p = p.filter(function (e) { return !ya[e.hora]; });
+    return abiertos.concat(p).sort(function (a, b) { return a.hora.localeCompare(b.hora); });
+  }
+  function llamar(fn, a) {
+    return new Promise(function (r) { setTimeout(r, fn === 'subirFoto' ? 900 : 350); }).then(function () {
+      if (fn === 'iniciar') return { ahora: Date.now(), personas: personas.map(function (x) { return Object.assign({}, x); }), eventos: propuestas() };
+      if (fn === 'abrirEvento') {
+        var id = 'E' + a.fecha.replace(/-/g, '') + a.hora.replace(':', '') + '-demo1';
+        if (!eventos[id]) {
+          var ini = inicioPrueba(), p = a.hora.split(':'), d = new Date(); d.setHours(+p[0], +p[1], 0, 0); if (a.fecha === hoyIso()) ini = d.getTime();
+          var ev = { id: id, fecha: a.fecha, hora: a.hora, horaReal: '', tipo: a.tipo, comite: a.comite, tema: a.tema, dirige: a.dirige, predica: a.predica, limpieza: a.limpieza || '', recepcion: a.por, estado: 'Abierto', origen: a.origen, fotos: [], observaciones: '', inicioMs: ini, inicioMs0: ini, asistentes: [] };
+          [[7, 18], [13, 17], [4, 14], [5, 14], [16, 9], [12, 6], [21, 2]].forEach(function (x, i) {
+            var q = personas[x[0]];
+            ev.asistentes.push({ rid: 'demo' + i + 'abcdef', pid: q.id, n: q.n, t: q.t, e: q.e, c: q.c, a: q.t === 'Simpatizante' ? 'Amiga de la hna. Paola' : '', h: partes(ini - x[1] * 60000).hm, nueva: false, por: a.por, m: ini - x[1] * 60000 });
+          });
+          eventos[id] = ev;
+        }
+        return completo(eventos[id]);
+      }
+      if (fn === 'fotos') return { fotos: fotosPrueba() };
+      var e = eventos[a.id];
+      if (!e) throw new Error('Este evento ya no está en la hoja. Vuelva al inicio.');
+      if (fn === 'leerEvento') return completo(e);
+      if (fn === 'registrar') {
+        var pids = {};
+        e.asistentes = e.asistentes.filter(function (x) { return (a.quitar || []).indexOf(x.rid) < 0; });
+        (a.items || []).forEach(function (it) {
+          var prev = e.asistentes.filter(function (x) { return x.rid === it.rid; })[0];
+          if (prev) { prev.t = it.t; prev.e = it.e || prev.e; prev.c = it.c; prev.a = it.a; return; }
+          var pid = it.pid;
+          if (!pid && it.nueva && it.n !== SIN_NOMBRE) { pid = 'P' + String(personas.length + 1).padStart(4, '0'); personas.push({ id: pid, n: it.n, t: it.t, e: it.e || 'Adulto', c: it.c, f: '', a: it.a }); pids[it.rid] = pid; }
+          e.asistentes.push({ rid: it.rid, pid: pid, n: it.n, t: it.t, e: it.e || (it.t === 'Menor' ? 'Menor' : 'Adulto'), c: it.c, a: it.a, h: it.h, nueva: it.nueva && it.primera, por: a.por, m: Date.now() });
+        });
+        return { ok: true, evento: completo(e), pids: pids, duplicados: [] };
+      }
+      if (fn === 'actualizarEvento') {
+        Object.keys(a.campos || {}).forEach(function (k) { if (k === 'estado') e.estado = a.campos.estado; else e[k] = a.campos[k]; });
+        return completo(e);
+      }
+      if (fn === 'subirFoto') {
+        var c = completo(e);
+        if (Date.now() < c.fotoDesdeMs) throw new Error('Todavía no: la foto se puede hacer a partir de las ' + partes(c.fotoDesdeMs).hm + ', cuando el evento lleve ' + D.minutosFoto + ' minutos. Así sale la congregación completa.');
+        e.fotos.push({ hora: partes(Date.now()).hm, min: Math.floor((Date.now() - c.inicioMs) / 60000), n: e.asistentes.length, url: '#' });
+        return completo(e);
+      }
+      if (fn === 'cerrarEvento') { e.estado = 'Cerrado'; e.observaciones = a.observaciones || ''; return completo(e); }
+      throw new Error('Función desconocida.');
+    });
+  }
+  // Siluetas dibujadas para la demostración: no son fotos de nadie.
+  function fotosPrueba() {
+    var fondos = ['#cfe0f5', '#f6dccc', '#d3eedf', '#f3e4bf', '#e2d9f3', '#d7e7ea'], out = {};
+    personas.forEach(function (p, i) {
+      if (i % 3 === 2 || p.e === 'Menor') return;
+      var svg = '<svg xmlns="http://www.w3.org/2000/svg" width="96" height="96" viewBox="0 0 96 96"><rect width="96" height="96" fill="' + fondos[i % fondos.length] + '"/>' +
+        '<circle cx="48" cy="40" r="21" fill="#7a8796"/><path d="M8 96c2-20 19-31 40-31s38 11 40 31z" fill="#7a8796"/></svg>';
+      out[p.id] = 'data:image/svg+xml;base64,' + btoa(svg);
+    });
+    return out;
+  }
+  return { llamar: llamar };
+})();
+
+// En la vista de prueba no hace falta clave.
+if (DEMO && !S.clave) { S.clave = 'prueba'; }
+if (DEMO && !S.por) { S.por = 'Hna. Marta León'; }
+if (!DEMO && !EN_GOOGLE) llamar('config').then(aplicarConfig).catch(function () { /* se usa la lista incluida */ });
+cargar();
+})();
+</script>
+</body>
+</html>
